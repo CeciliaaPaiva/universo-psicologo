@@ -217,7 +217,7 @@ GOOGLE_CLIENT_SECRET=
 
 **Período:** Semanas 5–6  
 **Objetivo:** A plataforma entra em operação. Paciente encontra psicólogos disponíveis para terapia social, visualiza o valor calculado pelo seu perfil e agenda uma sessão. Este é o sprint mais crítico do MVP.  
-**Pontos:** 21  
+**Pontos:** 23  
 **Release:** `v0.3.0-marketplace`
 
 ### Histórias
@@ -227,7 +227,7 @@ GOOGLE_CLIENT_SECRET=
 | US-005 | Edição de Perfil do Paciente | 2 | Normal |
 | US-014 | Buscar Psicólogos Disponíveis | 8 | 🔴 Bloqueante |
 | US-015 | Agendar Sessão pelo Marketplace | 5 | 🔴 Bloqueante |
-| US-016 | Precificação Dinâmica da Sessão | 3 | 🔴 Bloqueante |
+| US-016 | Precificação Dinâmica e Modalidade de Atendimento | 5 | 🔴 Bloqueante |
 | US-013 | Consultar Histórico de Prontuário (psicólogo) | 3 | Normal |
 
 ### Entregas técnicas
@@ -236,40 +236,43 @@ GOOGLE_CLIENT_SECRET=
 
 | Arquivo | Descrição |
 |---|---|
-| `V6__create_sessoes.sql` | Tabela `sessao` com status e valores financeiros |
+| `V6__create_sessoes.sql` | Tabela `sessao` com `modalidade` (AVULSA/PACOTE_MENSAL), `cancelado_em` e campos financeiros |
 | `MarketplaceController` | GET `/api/marketplace/psicologos` (com filtros), GET `/api/marketplace/psicologos/{id}` |
-| `PrecificacaoService` | Recebe `FaixaRenda` → retorna `BigDecimal`; lança `PacienteNaoElegivelException` fora do escopo |
-| `AgendaController` (paciente) | POST `/api/agenda/sessoes` — registra agendamento e marca slot como indisponível |
+| `PrecificacaoService` | `calcular(FaixaRenda, Modalidade)` → `BigDecimal`; lança `PacienteNaoElegivelException` fora do escopo |
+| `AgendaController` (paciente) | POST `/api/agenda/sessoes` — body inclui `modalidade`; registra agendamento e marca slot como indisponível |
 | `UsuarioController` | PUT `/api/usuarios/paciente/perfil`; histórico de alterações de `faixa_renda` registrado |
-| E-mail | Confirmação de agendamento para paciente e psicólogo |
+| E-mail | Confirmação de agendamento para paciente e psicólogo (inclui modalidade e valor) |
 
 **Tabela de precificação implementada em `PrecificacaoService`:**
 
-| FaixaRenda | Valor retornado |
-|---|---|
-| FAIXA_1 | R$ 30,00 |
-| FAIXA_2 | R$ 45,00 |
-| FAIXA_3 | R$ 65,00 |
-| FAIXA_4 | R$ 80,00 |
-| fora do escopo | `PacienteNaoElegivelException` |
+| FaixaRenda | Avulsa | Pacote (total/mês) | Pacote (por sessão) |
+|---|---|---|---|
+| FAIXA_1 | R$ 60,00 | R$ 228,00 | R$ 57,00 |
+| FAIXA_2 | R$ 65,00 | R$ 247,00 | R$ 61,75 |
+| FAIXA_3 | R$ 70,00 | R$ 266,00 | R$ 66,50 |
+| FAIXA_4 | R$ 75,00 | R$ 285,00 | R$ 71,25 |
+| fora do escopo | `PacienteNaoElegivelException` | — | — |
 
 **Frontend:**
 
 | Arquivo | Descrição |
 |---|---|
 | `MarketplacePage` | Cards de psicólogos com filtros por especialidade e disponibilidade |
-| `PsicologoPublicProfile` | Perfil público: especialidades, política de cancelamento, link de videochamada, slots disponíveis |
-| `AgendamentosPage` (paciente) | Lista de sessões agendadas com status |
+| `PsicologoPublicProfile` | Perfil público: especialidades, política de cancelamento (8h), link de videochamada, slots disponíveis |
+| `ModalidadeSelector` | Seletor Avulsa / Pacote Mensal com comparativo de valores antes da confirmação |
+| `AgendamentosPage` (paciente) | Lista de sessões agendadas com status e modalidade |
 | `PerfilPage` (paciente) | Edição de dados pessoais e faixa de renda |
 
 ### Critérios de aceite do sprint
 
-- [ ] **A plataforma funciona:** paciente encontra psicólogo, vê valor da sessão e confirma agendamento
+- [ ] **A plataforma funciona:** paciente encontra psicólogo, escolhe modalidade, vê valor e confirma agendamento
 - [ ] Listagem exibe apenas psicólogos aprovados com slots disponíveis
-- [ ] Card do psicólogo exibe o valor calculado para o perfil do paciente logado
-- [ ] FAIXA_1 → R$30 / FAIXA_2 → R$45 / FAIXA_3 → R$65 / FAIXA_4 → R$80
-- [ ] Agendamento confirmado remove o slot da disponibilidade pública
-- [ ] E-mail de confirmação enviado para paciente e psicólogo
+- [ ] Paciente seleciona Avulsa ou Pacote Mensal antes de confirmar; valor correto exibido antes da confirmação
+- [ ] Avulsa: FAIXA_1→R$60 / FAIXA_2→R$65 / FAIXA_3→R$70 / FAIXA_4→R$75
+- [ ] Pacote mensal: FAIXA_1→R$228 / FAIXA_2→R$247 / FAIXA_3→R$266 / FAIXA_4→R$285
+- [ ] Agendamento confirmado remove o slot da disponibilidade pública; `modalidade` gravada na sessão
+- [ ] E-mail de confirmação enviado para paciente e psicólogo (inclui modalidade e valor)
+- [ ] Política de cancelamento de 8h exibida no perfil do psicólogo e no fluxo de confirmação
 - [ ] Alteração de faixa de renda não altera valor de sessões já confirmadas
 
 ---
@@ -527,11 +530,11 @@ US-017 (Solicitar revisão) ──► US-027 (Admin decide)
 |---|---|---|---|
 | Sprint 0 | Fundação | 18 | Baixo |
 | Sprint 1 | Agenda e Plantão | 22 | Baixo |
-| Sprint 2 | **Marketplace — CORE** | 21 | Médio |
+| Sprint 2 | **Marketplace — CORE** | 23 | Médio |
 | Sprint 3 | Prontuário — Inovação #1 | 8 | Baixo (sprint dedicado) |
 | Sprint 4 | Chatbot — Inovação #2 | 22 | Médio |
 | Sprint 5 | Financeiro e Notificações | 16 | Baixo |
 | Sprint 6 | Admin, QA e Encerramento | 10 | Baixo |
-| **Total** | | **117** | |
+| **Total** | | **119** | |
 
 > A reestruturação eliminou o Sprint 1 sobrecarregado (30 pts → 22 pts) e garante que a plataforma já funciona ao final do Sprint 2 — antes de qualquer inovação.

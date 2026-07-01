@@ -114,18 +114,44 @@ Essencial para decisões de priorização, ordem de desenvolvimento e cortes de 
 - A plataforma atende **exclusivamente** pacientes de baixa renda (até Classe D). Pacientes acima desse limite são inelegíveis.
 - Métrica: **renda domiciliar per capita** (SM 2026 = R$ 1.621,00), alinhada com critérios oficiais do governo federal.
 
-| Enum `FaixaRenda` | Referência | Renda per capita/mês | Valor da sessão |
-|---|---|---|---|
-| `FAIXA_1` | BPC/LOAS | Até R$ 405,25 (¼ SM) | R$ 30,00 |
-| `FAIXA_2` | CadÚnico / Bolsa Família | R$ 405,26 – R$ 810,50 (½ SM) | R$ 45,00 |
-| `FAIXA_3` | Classe E | R$ 810,51 – R$ 1.621,00 (1 SM) | R$ 65,00 |
-| `FAIXA_4` | Classe D | R$ 1.621,01 – R$ 3.242,00 (2 SM) | R$ 80,00 |
+**Sessão avulsa** — valor por sessão única:
+
+| Enum `FaixaRenda` | Referência | Renda per capita/mês | Valor avulso | Taxa 20% | Psicólogo recebe |
+|---|---|---|---|---|---|
+| `FAIXA_1` | BPC/LOAS | Até R$ 405,25 (¼ SM) | R$ 60,00 | R$ 12,00 | R$ 48,00 |
+| `FAIXA_2` | CadÚnico / Bolsa Família | R$ 405,26 – R$ 810,50 (½ SM) | R$ 65,00 | R$ 13,00 | R$ 52,00 |
+| `FAIXA_3` | Classe E | R$ 810,51 – R$ 1.621,00 (1 SM) | R$ 70,00 | R$ 14,00 | R$ 56,00 |
+| `FAIXA_4` | Classe D | R$ 1.621,01 – R$ 3.242,00 (2 SM) | R$ 75,00 | R$ 15,00 | R$ 60,00 |
+
+**Pacote mensal** — 4 sessões com 5% de desconto sobre o total avulso:
+
+| Enum `FaixaRenda` | Total/mês | Por sessão |
+|---|---|---|
+| `FAIXA_1` | R$ 228,00 | R$ 57,00 |
+| `FAIXA_2` | R$ 247,00 | R$ 61,75 |
+| `FAIXA_3` | R$ 266,00 | R$ 66,50 |
+| `FAIXA_4` | R$ 285,00 | R$ 71,25 |
 
 - Cálculo centralizado em `PrecificacaoService`. Para renda fora do escopo, lançar `PacienteNaoElegivelException`.
-- Percentual de taxa da plataforma ainda a definir — usar `CobrancaService` para aplicar e registrar.
+- Taxa da plataforma: **20% por sessão** sobre o valor pago pelo paciente (avulsa ou per-sessão no pacote). Variável de ambiente: `TAXA_PLATAFORMA_PERCENTUAL=20`.
+- Pacote: a cobrança mensal é gerada no ato do agendamento e cobre as 4 sessões do mês.
+
+### Modalidades de atendimento
+- **Avulsa:** sessão única; paciente agenda e paga por sessão.
+- **Pacote mensal:** compromisso de 4 sessões/mês; cobrança única gerada ao confirmar o pacote; 5% de desconto sobre 4 avulsas.
+- A modalidade é selecionada pelo paciente no momento do agendamento e registrada no campo `modalidade` da entidade `SESSAO` (enum `AVULSA` / `PACOTE_MENSAL`).
+- Pacotes não são reembolsáveis — cancelamento de sessão individual dentro do pacote segue a política de cancelamento.
+
+### Política de cancelamento
+- **Prazo livre:** cancelamento permitido até **8 horas antes** do horário agendado, sem custo.
+- **Cancelamento de última hora:** menos de 8h de antecedência — o psicólogo avalia o motivo e decide entre:
+  - Cobrar a sessão normalmente, ou
+  - Realocar o atendimento para outra data/horário.
+- A decisão é exclusivamente entre psicólogo e paciente; a plataforma registra o cancelamento mas não impõe penalidade automática.
+- O fluxo é **idêntico para avulsa e pacote mensal**.
 
 ### Aprovação de psicólogos
-- Cadastro criado com status `PENDENTE_APROVACAO`. O ADMIN avalia currículo, CRP e política de cancelamento.
+- Cadastro criado com status `PENDENTE_APROVACAO`. O ADMIN avalia currículo, CRP e política de cancelamento informada pelo psicólogo.
 - Psicólogo com status `PENDENTE_APROVACAO` ou `REPROVADO` não acessa funcionalidades operacionais.
 
 ### Pagamento
@@ -150,10 +176,11 @@ Essencial para decisões de priorização, ordem de desenvolvimento e cortes de 
 ```env
 GEMINI_API_KEY=
 RESEND_API_KEY=
-JWT_SECRET=                  # mínimo 256 bits
-CRIPTOGRAFIA_CHAVE=          # chave AES-256 (32 bytes, base64)
+JWT_SECRET=                      # mínimo 256 bits
+CRIPTOGRAFIA_CHAVE=              # chave AES-256 (32 bytes, base64)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+TAXA_PLATAFORMA_PERCENTUAL=20    # 20% sobre o valor pago pelo paciente por sessão
 ```
 
 ---
@@ -203,7 +230,5 @@ fix(chatbot): corrige detecção de crise em mensagens curtas
 
 | Item | Impacto no código |
 |---|---|
-| Percentual de taxa da plataforma | `CobrancaService` |
-| Regras mínimas da política de cancelamento | Validação no cadastro, `CobrancaService` |
 | Gateway de pagamento real | Substitui simulação em `CobrancaService` (pós-MVP) |
 | Domínio de produção | Configuração Caddy e CORS |

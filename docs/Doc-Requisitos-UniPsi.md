@@ -84,26 +84,40 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 | RF-18 | O paciente deve poder buscar psicólogos disponíveis para terapia social, com filtros por especialidade e disponibilidade. | Paciente |
 | RF-19 | O sistema deve exibir o perfil público do psicólogo (especialidades, abordagem, disponibilidade e política de cancelamento). | Paciente |
 | RF-20 | O paciente deve poder agendar uma sessão diretamente pelo marketplace, sem obrigatoriedade de passar pelo chatbot. | Paciente |
-| RF-21 | O valor da sessão deve ser calculado automaticamente com base na **renda domiciliar per capita** autodeclarada pelo paciente, conforme tabela oficial de faixas abaixo. A terapia social é destinada exclusivamente a pacientes de baixa renda (até Classe D). | Sistema |
+| RF-21 | O valor da sessão deve ser calculado automaticamente com base na **renda domiciliar per capita** autodeclarada pelo paciente e na **modalidade de atendimento** escolhida (avulsa ou pacote mensal). | Sistema |
 
 **Tabela de precificação — Terapia Social**
 
 > Referência: Salário Mínimo 2026 = **R$ 1.621,00** — alinhada com critérios oficiais do governo federal (CadÚnico, Bolsa Família, BPC/LOAS).
 
-| Faixa | Referência oficial | Renda domiciliar per capita/mês | Valor da sessão |
-|---|---|---|---|
-| `FAIXA_1` | BPC/LOAS — extrema pobreza | Até R$ 405,25 (¼ do SM) | **R$ 30,00** |
-| `FAIXA_2` | CadÚnico / Bolsa Família | R$ 405,26 até R$ 810,50 (½ SM) | **R$ 45,00** |
-| `FAIXA_3` | Classe E — baixa renda | R$ 810,51 até R$ 1.621,00 (1 SM) | **R$ 65,00** |
-| `FAIXA_4` | Classe D — renda baixa-média | R$ 1.621,01 até R$ 3.242,00 (2 SM) | **R$ 80,00** |
+**Sessão avulsa:**
+
+| Faixa | Referência oficial | Renda domiciliar per capita/mês | Valor avulso | Taxa plataforma (20%) | Psicólogo recebe |
+|---|---|---|---|---|---|
+| `FAIXA_1` | BPC/LOAS — extrema pobreza | Até R$ 405,25 (¼ SM) | **R$ 60,00** | R$ 12,00 | R$ 48,00 |
+| `FAIXA_2` | CadÚnico / Bolsa Família | R$ 405,26 – R$ 810,50 (½ SM) | **R$ 65,00** | R$ 13,00 | R$ 52,00 |
+| `FAIXA_3` | Classe E — baixa renda | R$ 810,51 – R$ 1.621,00 (1 SM) | **R$ 70,00** | R$ 14,00 | R$ 56,00 |
+| `FAIXA_4` | Classe D — renda baixa-média | R$ 1.621,01 – R$ 3.242,00 (2 SM) | **R$ 75,00** | R$ 15,00 | R$ 60,00 |
+
+**Pacote mensal (4 sessões, 5% de desconto sobre 4 × avulsa):**
+
+| Faixa | Total/mês | Por sessão | Taxa plataforma (20% por sessão) | Psicólogo recebe/sessão |
+|---|---|---|---|---|
+| `FAIXA_1` | **R$ 228,00** | R$ 57,00 | R$ 11,40 | R$ 45,60 |
+| `FAIXA_2` | **R$ 247,00** | R$ 61,75 | R$ 12,35 | R$ 49,40 |
+| `FAIXA_3` | **R$ 266,00** | R$ 66,50 | R$ 13,30 | R$ 53,20 |
+| `FAIXA_4` | **R$ 285,00** | R$ 71,25 | R$ 14,25 | R$ 57,00 |
 
 > Pacientes com renda per capita acima de R$ 3.242,00 **não são elegíveis** para a terapia social. O sistema deve impedir o cadastro nessa condição e orientar o usuário a buscar atendimento particular.
 
 **Regras de aplicação:**
-- A métrica é renda domiciliar per capita (renda total do domicílio ÷ número de moradores), autodeclarada no cadastro.
-- O valor é exibido ao paciente antes da confirmação do agendamento.
-- Alterações de faixa afetam apenas novos agendamentos — sessões já confirmadas mantêm o valor original.
-- O cálculo é centralizado no `PrecificacaoService`, que recebe o enum `FaixaRenda` e retorna o `BigDecimal` correspondente. Para renda fora do escopo, lança `PacienteNaoElegivelException`. |
+- Renda domiciliar per capita autodeclarada no cadastro (total ÷ número de moradores).
+- Valor exibido ao paciente antes da confirmação, conforme modalidade selecionada.
+- Alterações de faixa afetam apenas novos agendamentos; sessões já confirmadas mantêm o valor original.
+- Cálculo centralizado em `PrecificacaoService(FaixaRenda, Modalidade)` → `BigDecimal`. Para renda fora do escopo, lança `PacienteNaoElegivelException`.
+- Taxa da plataforma: **20% por sessão**, aplicado pelo `CobrancaService` via `TAXA_PLATAFORMA_PERCENTUAL`. |
+| RF-21a | O paciente deve poder escolher a modalidade de atendimento no ato do agendamento: **Avulsa** (sessão única) ou **Pacote Mensal** (4 sessões com 5% de desconto). | Paciente |
+| RF-21b | A plataforma deve impor a **política de cancelamento**: cancelamento livre até 8h antes do atendimento. Cancelamentos com menos de 8h ficam registrados e o psicólogo decide — sem penalidade automática da plataforma — entre cobrar a sessão ou realocar para outra data. A regra se aplica igualmente a sessões avulsas e a sessões individuais dentro de um pacote. | Sistema / Psicólogo |
 | RF-22 | O psicólogo deve poder solicitar revisão do perfil financeiro de um paciente quando identificar inconsistência. A plataforma avalia e decide sem prazo definido e sem suspender os atendimentos em curso. | Psicólogo / Admin |
 
 ### 3.6 Chatbot de Triagem
@@ -122,7 +136,7 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 |---|---|---|
 | RF-28 | Após a realização de uma sessão, o sistema deve gerar uma cobrança para o paciente com o valor calculado conforme o perfil socioeconômico. | Sistema |
 | RF-29 | O sistema deve simular o fluxo de pagamento no MVP (sem gateway real). O status da cobrança deve poder ser alterado para: pendente, pago ou cancelado. | Paciente |
-| RF-30 | O sistema deve aplicar o percentual de taxa da plataforma sobre o valor da sessão e registrar o valor líquido a ser repassado ao psicólogo. (Percentual a definir.) | Sistema |
+| RF-30 | O sistema deve aplicar **20% de taxa da plataforma** sobre o valor pago pelo paciente por sessão (avulsa ou por-sessão no pacote) e registrar o valor líquido a ser repassado ao psicólogo. | Sistema |
 
 ### 3.8 Relatório Financeiro
 
@@ -310,9 +324,10 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 
 | Item | Detalhe |
 |---|---|
-| ~~Faixas de precificação por perfil socioeconômico~~ | ✅ Decidido — ver tabela em RF-21. 4 faixas baseadas em renda per capita (SM 2026 = R$ 1.621,00). |
-| Percentual retido pela plataforma por sessão | A definir. |
-| Regras da política de cancelamento | Configurada pelo psicólogo; critérios mínimos a definir pela plataforma. |
+| ~~Faixas de precificação por perfil socioeconômico~~ | ✅ Decidido — ver tabela em RF-21. Avulsa R$60–R$75; pacote mensal R$228–R$285. |
+| ~~Percentual retido pela plataforma por sessão~~ | ✅ Decidido — 20% por sessão sobre o valor pago pelo paciente. Ver RF-30. |
+| ~~Regras da política de cancelamento~~ | ✅ Decidido — 8h de antecedência; psicólogo decide em cancelamentos de última hora. Ver RF-21b. |
+| ~~Modalidades de atendimento~~ | ✅ Decidido — Avulsa e Pacote Mensal (4 sessões, 5% desconto). Ver RF-21a. |
 | Gateway de pagamento | A definir para versão pós-MVP. |
 | Critérios formais de aprovação/reprovação de psicólogos | A documentar em processo interno do time de administração. |
-| Integração de agenda | Google Calendar API (preferencial) ou Calendly — avaliar viabilidade técnica. |
+| Integração de agenda | Google Calendar API — definido na arquitetura. |

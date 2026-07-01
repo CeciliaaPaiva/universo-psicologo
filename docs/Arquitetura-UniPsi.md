@@ -413,10 +413,12 @@ universo-psicologo-web/
 │ psicologo_id (FK)    │          │ slot_id (FK)             │
 │ inicio               │          │ paciente_id (FK)         │
 │ fim                  │          │ psicologo_id (FK)        │
-│ disponivel           │          │ valor_sessao (decimal)   │
-│ google_event_id      │          │ taxa_plataforma (decimal)│
-└──────────────────────┘          │ valor_liquido (decimal)  │
+│ disponivel           │          │ modalidade (enum)        │ ← AVULSA | PACOTE_MENSAL
+│ google_event_id      │          │ valor_sessao (decimal)   │
+└──────────────────────┘          │ taxa_plataforma (decimal)│
+                                  │ valor_liquido (decimal)  │
                                   │ status (enum)            │
+                                  │ cancelado_em (nullable)  │
                                   │ criada_em                │
                                   └──────────────────────────┘
 
@@ -455,10 +457,12 @@ CREATE TYPE status_aprovacao AS ENUM ('PENDENTE', 'APROVADO', 'REPROVADO', 'AGUA
 -- Faixa de renda do paciente (renda domiciliar per capita — SM 2026 = R$ 1.621,00)
 -- Apenas pacientes de FAIXA_1 a FAIXA_4 são elegíveis para terapia social (até Classe D)
 CREATE TYPE faixa_renda AS ENUM ('FAIXA_1', 'FAIXA_2', 'FAIXA_3', 'FAIXA_4');
--- FAIXA_1: até R$ 405,25 (¼ SM) → R$ 30,00  — BPC/LOAS
--- FAIXA_2: R$ 405,26–R$ 810,50 (½ SM) → R$ 45,00  — CadÚnico / Bolsa Família
--- FAIXA_3: R$ 810,51–R$ 1.621,00 (1 SM) → R$ 65,00  — Classe E
--- FAIXA_4: R$ 1.621,01–R$ 3.242,00 (2 SM) → R$ 80,00  — Classe D
+-- Avulsa:  FAIXA_1→R$60 | FAIXA_2→R$65 | FAIXA_3→R$70 | FAIXA_4→R$75
+-- Pacote:  FAIXA_1→R$228/mês | FAIXA_2→R$247/mês | FAIXA_3→R$266/mês | FAIXA_4→R$285/mês (4 sessões, 5% desconto)
+-- Taxa plataforma: 20% sobre o valor por sessão em ambas as modalidades
+
+-- Modalidade de atendimento
+CREATE TYPE modalidade_sessao AS ENUM ('AVULSA', 'PACOTE_MENSAL');
 
 -- Status de sessão
 CREATE TYPE status_sessao AS ENUM ('AGENDADA', 'REALIZADA', 'CANCELADA');
@@ -732,9 +736,11 @@ Retorna resposta          │
 
 | Decisão | Status | Impacto |
 |---|---|---|
-| Percentual de taxa da plataforma por sessão | A definir | Cálculo em CobrancaService |
-| Regras mínimas da política de cancelamento | A definir | Validação no cadastro e CobrancaService |
-| Gateway de pagamento real (pós-MVP) | A definir para pós-MVP | Substituirá simulação em CobrancaService |
-| Sincronização bidirecional com Google Calendar | A avaliar | GoogleCalendarService (webhook do Google) |
+| ~~Taxa da plataforma~~ | ✅ 20% por sessão — `TAXA_PLATAFORMA_PERCENTUAL=20` | `CobrancaService` |
+| ~~Política de cancelamento~~ | ✅ 8h de antecedência; psicólogo decide em cancelamentos de última hora | Campo `cancelado_em` em `SESSAO` |
+| ~~Modalidades de atendimento~~ | ✅ `AVULSA` e `PACOTE_MENSAL` (4 sessões, 5% desconto) | Enum `modalidade_sessao`; campo `modalidade` em `SESSAO` |
+| Gateway de pagamento real (pós-MVP) | A definir para pós-MVP | Substituirá simulação em `CobrancaService` |
+| Domínio de produção | A definir | Configuração Caddy e CORS |
+| Sincronização bidirecional com Google Calendar | A avaliar | `GoogleCalendarService` (webhook do Google) |
 | Domínio de produção e provedor de hospedagem | A definir | Configuração Caddy e CORS em produção |
 | Política de retenção de logs de auditoria do prontuário | A definir com jurídico | Tabela auditoria_prontuario |

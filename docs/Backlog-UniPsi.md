@@ -299,27 +299,41 @@
 
 ---
 
-### US-016 — Precificação Dinâmica da Sessão
+### US-016 — Precificação Dinâmica e Modalidade de Atendimento
 
-**Como** plataforma,  
-**quero** calcular automaticamente o valor da sessão com base no perfil socioeconômico autodeclarado pelo paciente,  
-**para que** o acesso à terapia seja proporcional à capacidade financeira de cada pessoa.
+**Como** paciente,  
+**quero** escolher entre sessão avulsa ou pacote mensal e ver o valor calculado automaticamente pelo meu perfil socioeconômico,  
+**para que** o acesso à terapia seja proporcional à minha capacidade financeira e eu possa planejar meu investimento mensal.
 
 **Critérios de aceitação:**
-- [ ] Valor calculado conforme tabela oficial (SM 2026 = R$ 1.621,00):
 
-  | Faixa | Referência | Valor |
+**Avulsa — valor por sessão:**
+
+  | Faixa | Referência | Valor avulso |
   |---|---|---|
-  | FAIXA_1 | BPC/LOAS (até ¼ SM) | R$ 30,00 |
-  | FAIXA_2 | CadÚnico / Bolsa Família (½ SM) | R$ 45,00 |
-  | FAIXA_3 | Classe E (1 SM) | R$ 65,00 |
-  | FAIXA_4 | Classe D (2 SM) | R$ 80,00 |
+  | FAIXA_1 | BPC/LOAS (até ¼ SM) | R$ 60,00 |
+  | FAIXA_2 | CadÚnico / Bolsa Família (½ SM) | R$ 65,00 |
+  | FAIXA_3 | Classe E (1 SM) | R$ 70,00 |
+  | FAIXA_4 | Classe D (2 SM) | R$ 75,00 |
 
-- [ ] Valor exibido ao paciente antes da confirmação do agendamento
-- [ ] `PrecificacaoService` lança `PacienteNaoElegivelException` para renda fora das 4 faixas (nunca deve ocorrer em produção, mas protege o sistema)
-- [ ] Alteração de faixa de renda não altera valor de sessões já agendadas
+**Pacote mensal — 4 sessões, 5% desconto:**
 
-**Prioridade:** Alta | **Pontos:** 3  
+  | Faixa | Total/mês | Por sessão |
+  |---|---|---|
+  | FAIXA_1 | R$ 228,00 | R$ 57,00 |
+  | FAIXA_2 | R$ 247,00 | R$ 61,75 |
+  | FAIXA_3 | R$ 266,00 | R$ 66,50 |
+  | FAIXA_4 | R$ 285,00 | R$ 71,25 |
+
+- [ ] Paciente seleciona a modalidade (Avulsa / Pacote Mensal) antes de confirmar o agendamento
+- [ ] Valor da modalidade selecionada exibido claramente antes da confirmação
+- [ ] `PrecificacaoService(FaixaRenda, Modalidade)` retorna o valor correto para cada combinação
+- [ ] `PrecificacaoService` lança `PacienteNaoElegivelException` para renda fora das 4 faixas
+- [ ] Alteração de faixa de renda não altera valor de sessões já confirmadas
+- [ ] Taxa de 20% calculada e registrada no `CobrancaService`; valor líquido exibido ao psicólogo no relatório financeiro
+- [ ] Cancelamento dentro do pacote mensal segue a política de 8h (RF-21b)
+
+**Prioridade:** Alta | **Pontos:** 5  
 **Depende de:** US-002, US-015
 
 ---

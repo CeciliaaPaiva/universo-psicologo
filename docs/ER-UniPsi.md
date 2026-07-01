@@ -54,10 +54,12 @@ erDiagram
         uuid      slot_id         FK
         uuid      paciente_id     FK
         uuid      psicologo_id    FK
+        enum      modalidade      "AVULSA | PACOTE_MENSAL"
         decimal   valor_sessao
         decimal   taxa_plataforma
         decimal   valor_liquido
         enum      status          "AGENDADA | REALIZADA | CANCELADA"
+        timestamp cancelado_em    "nullable"
         timestamp criada_em
     }
 
@@ -161,7 +163,7 @@ erDiagram
 | `USUARIO` | Tabela base para todos os perfis. O campo `role` determina qual tabela de perfil é consultada em seguida. |
 | `PSICOLOGO` / `PACIENTE` | Herança por tabela associada — cada entidade tem sua própria tabela com FK para `USUARIO`. |
 | `SLOT` | Representa um horário criado pelo psicólogo. Torna-se indisponível ao ser vinculado a uma `SESSAO`. |
-| `SESSAO` | Guarda `psicologo_id` além do `slot_id` para facilitar consultas financeiras e de agenda sem join adicional. |
+| `SESSAO` | Guarda `psicologo_id` além do `slot_id` para facilitar consultas financeiras e de agenda sem join adicional. `modalidade` define se é `AVULSA` (sessão única) ou `PACOTE_MENSAL` (1 das 4 sessões do pacote). `cancelado_em` é preenchido ao cancelar; a decisão de cobrar ou realocar fica no campo de status e no relacionamento com `COBRANCA`. |
 | `PRONTUARIO` | `paciente_id` é nullable — o psicólogo pode optar por não vincular o cadastro da plataforma, usando apenas o codinome. |
 | `ANOTACAO` | `conteudo_enc` nunca trafega em texto claro fora do `CriptografiaService`. O `iv` é único por anotação. |
 | `AUDITORIA_PRONTUARIO` | Registra todo acesso ao prontuário (leitura, escrita, edição) para conformidade com CFP e LGPD. |
