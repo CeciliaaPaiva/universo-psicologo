@@ -31,6 +31,10 @@ server:
   port: 8080
 
 unipsi:
+  frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
   jwt:
     secret: ${JWT_SECRET:}
     access-token-ttl-minutes: 15
@@ -47,6 +51,7 @@ unipsi:
     api-key: ${GEMINI_API_KEY:}
   resend:
     api-key: ${RESEND_API_KEY:}
+    remetente: ${RESEND_FROM:Universo Psicólogo <onboarding@resend.dev>}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
     client-secret: ${GOOGLE_CLIENT_SECRET:}
