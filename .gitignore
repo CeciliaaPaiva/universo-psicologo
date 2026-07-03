@@ -1,0 +1,7 @@
+.env
+.env.*.local
+target/
+node_modules/
+*.class
+.idea/
+.DS_Store

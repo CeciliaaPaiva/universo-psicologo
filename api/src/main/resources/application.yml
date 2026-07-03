@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: api
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:unipsi}
+    username: ${DB_USER:unipsi}
+    password: ${DB_PASSWORD:}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USER:unipsi}
+      password: ${REDIS_PASSWORD:}
+
+server:
+  port: 8080
+
+unipsi:
+  jwt:
+    secret: ${JWT_SECRET:}
+    access-token-ttl-minutes: 15
+    refresh-token-ttl-dias: 7
+  criptografia:
+    chave: ${CRIPTOGRAFIA_CHAVE:}
+  taxa-plataforma-percentual: ${TAXA_PLATAFORMA_PERCENTUAL:20}
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:unipsi}
+    secret-key: ${MINIO_SECRET_KEY:}
+    bucket: ${MINIO_BUCKET:unipsi}
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+  resend:
+    api-key: ${RESEND_API_KEY:}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
