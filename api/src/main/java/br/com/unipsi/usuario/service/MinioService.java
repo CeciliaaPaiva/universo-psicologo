@@ -18,6 +18,9 @@ public class MinioService {
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
     private static final long TAMANHO_MAXIMO_BYTES = 5L * 1024 * 1024;
 
+    private static final List<String> TIPOS_IMAGEM_PERMITIDOS = List.of("image/jpeg", "image/png", "image/webp");
+    private static final long TAMANHO_MAXIMO_FOTO_BYTES = 2L * 1024 * 1024;
+
     private final MinioClient minioClient;
 
     @Value("${unipsi.minio.bucket}")
@@ -44,6 +47,31 @@ public class MinioService {
                     .build());
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao enviar currículo", e);
+        }
+        return chaveObjeto;
+    }
+
+    public String enviarFoto(UUID psicologoId, MultipartFile arquivo) {
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw new IllegalArgumentException("Foto é obrigatória");
+        }
+        if (!TIPOS_IMAGEM_PERMITIDOS.contains(arquivo.getContentType())) {
+            throw new IllegalArgumentException("Foto deve ser JPEG, PNG ou WEBP");
+        }
+        if (arquivo.getSize() > TAMANHO_MAXIMO_FOTO_BYTES) {
+            throw new IllegalArgumentException("Foto deve ter no máximo 2 MB");
+        }
+
+        String chaveObjeto = "fotos/%s/%s".formatted(psicologoId, arquivo.getOriginalFilename());
+        try (var inputStream = arquivo.getInputStream()) {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(chaveObjeto)
+                    .stream(inputStream, arquivo.getSize(), -1)
+                    .contentType(arquivo.getContentType())
+                    .build());
+        } catch (Exception e) {
+            throw new IllegalStateException("Falha ao enviar foto", e);
         }
         return chaveObjeto;
     }

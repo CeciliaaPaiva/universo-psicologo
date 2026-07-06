@@ -4,6 +4,10 @@ import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPacientePage } from '@/pages/RegisterPacientePage'
 import { RegisterPsicologoPage } from '@/pages/RegisterPsicologoPage'
 import { AprovacoesPage } from '@/pages/AprovacoesPage'
+import { AgendaPage } from '@/pages/AgendaPage'
+import { PlantaoPage } from '@/pages/PlantaoPage'
+import { PerfilPsicologoPage } from '@/pages/PerfilPsicologoPage'
+import { PsicologoLayout } from '@/layouts/PsicologoLayout'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -12,6 +16,20 @@ export const router = createBrowserRouter([
   {
     element: <PrivateRoute role="ADMIN" />,
     children: [{ path: '/admin/aprovacoes', element: <AprovacoesPage /> }],
+  },
+  {
+    element: <PrivateRoute role="PSICOLOGO" />,
+    children: [
+      {
+        element: <PsicologoLayout />,
+        children: [
+          { path: '/agenda', element: <AgendaPage /> },
+          { path: '/plantao', element: <PlantaoPage /> },
+          { path: '/perfil', element: <PerfilPsicologoPage /> },
+          { path: '/', element: <AgendaPage /> },
+        ],
+      },
+    ],
   },
   { path: '*', element: <LoginPage /> },
 ])

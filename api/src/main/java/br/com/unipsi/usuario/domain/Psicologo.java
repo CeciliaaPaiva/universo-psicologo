@@ -52,4 +52,13 @@ public class Psicologo {
 
     @Column(name = "motivo_reprovacao", columnDefinition = "TEXT")
     private String motivoReprovacao;
+
+    @Column(name = "foto_url", length = 500)
+    private String fotoUrl;
+
+    @Column(name = "link_videochamada", length = 500)
+    private String linkVideochamada;
+
+    @Column(name = "google_refresh_token", length = 500)
+    private String googleRefreshToken;
 }

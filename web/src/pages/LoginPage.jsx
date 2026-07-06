@@ -17,7 +17,7 @@ const schema = z.object({
 
 const ROTA_POR_ROLE = {
   ADMIN: '/admin/aprovacoes',
-  PSICOLOGO: '/',
+  PSICOLOGO: '/agenda',
   PACIENTE: '/',
 }
 

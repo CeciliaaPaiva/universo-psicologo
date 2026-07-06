@@ -1,5 +1,6 @@
 package br.com.unipsi.config;
 
+import br.com.unipsi.agenda.domain.SlotIndisponivelException;
 import br.com.unipsi.auth.domain.CadastroNaoAprovadoException;
 import br.com.unipsi.auth.domain.CredenciaisInvalidasException;
 import br.com.unipsi.auth.domain.RefreshTokenInvalidoException;
@@ -40,6 +41,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RefreshTokenInvalidoException.class)
     public ResponseEntity<Map<String, String>> handle(RefreshTokenInvalidoException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("mensagem", e.getMessage()));
+    }
+
+    @ExceptionHandler(SlotIndisponivelException.class)
+    public ResponseEntity<Map<String, String>> handle(SlotIndisponivelException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensagem", e.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

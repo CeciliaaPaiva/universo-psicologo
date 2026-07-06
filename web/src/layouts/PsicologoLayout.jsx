@@ -1,0 +1,43 @@
+import { NavLink, Outlet } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/store/authStore'
+
+const LINKS = [
+  { to: '/agenda', label: 'Agenda' },
+  { to: '/plantao', label: 'Plantão' },
+  { to: '/perfil', label: 'Perfil' },
+]
+
+export function PsicologoLayout() {
+  const usuario = useAuthStore((s) => s.usuario)
+  const clearAuth = useAuthStore((s) => s.clearAuth)
+
+  return (
+    <div className="min-h-screen">
+      <header className="border-b">
+        <div className="mx-auto flex max-w-3xl items-center justify-between p-4">
+          <nav className="flex gap-4">
+            {LINKS.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) =>
+                  `text-sm font-medium ${isActive ? 'text-primary underline underline-offset-4' : 'text-muted-foreground'}`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">{usuario?.nome}</span>
+            <Button size="sm" variant="ghost" onClick={clearAuth}>
+              Sair
+            </Button>
+          </div>
+        </div>
+      </header>
+      <Outlet />
+    </div>
+  )
+}

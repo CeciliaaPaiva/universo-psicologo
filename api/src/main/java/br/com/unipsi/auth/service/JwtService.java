@@ -48,4 +48,27 @@ public class JwtService {
     public UUID extrairUsuarioId(String token) {
         return UUID.fromString(validarEExtrairClaims(token).getSubject());
     }
+
+    /**
+     * Token de curta duração usado como "state" em fluxos de redirecionamento externos
+     * (ex.: OAuth do Google Calendar), onde o Authorization header não está disponível.
+     */
+    public String gerarTokenEstado(UUID usuarioId, String finalidade) {
+        Instant agora = Instant.now();
+        return Jwts.builder()
+                .subject(usuarioId.toString())
+                .claim("finalidade", finalidade)
+                .issuedAt(Date.from(agora))
+                .expiration(Date.from(agora.plus(10, ChronoUnit.MINUTES)))
+                .signWith(chave)
+                .compact();
+    }
+
+    public UUID validarTokenEstado(String token, String finalidade) {
+        Claims claims = validarEExtrairClaims(token);
+        if (!finalidade.equals(claims.get("finalidade", String.class))) {
+            throw new io.jsonwebtoken.JwtException("Token de estado inválido");
+        }
+        return UUID.fromString(claims.getSubject());
+    }
 }
