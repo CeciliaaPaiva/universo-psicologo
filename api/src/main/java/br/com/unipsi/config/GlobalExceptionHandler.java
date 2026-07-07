@@ -4,6 +4,8 @@ import br.com.unipsi.agenda.domain.SlotIndisponivelException;
 import br.com.unipsi.auth.domain.CadastroNaoAprovadoException;
 import br.com.unipsi.auth.domain.CredenciaisInvalidasException;
 import br.com.unipsi.auth.domain.RefreshTokenInvalidoException;
+import br.com.unipsi.prontuario.domain.AcessoProntuarioNegadoException;
+import br.com.unipsi.prontuario.domain.CodinomeJaCadastradoException;
 import br.com.unipsi.usuario.domain.EmailJaCadastradoException;
 import br.com.unipsi.usuario.domain.PacienteNaoElegivelException;
 import java.util.Map;
@@ -46,6 +48,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SlotIndisponivelException.class)
     public ResponseEntity<Map<String, String>> handle(SlotIndisponivelException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensagem", e.getMessage()));
+    }
+
+    @ExceptionHandler(CodinomeJaCadastradoException.class)
+    public ResponseEntity<Map<String, String>> handle(CodinomeJaCadastradoException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensagem", e.getMessage()));
+    }
+
+    @ExceptionHandler(AcessoProntuarioNegadoException.class)
+    public ResponseEntity<Map<String, String>> handle(AcessoProntuarioNegadoException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("mensagem", e.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

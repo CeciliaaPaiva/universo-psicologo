@@ -25,6 +25,7 @@ Todos os documentos ficam em `/home/cecilia_paiva/universo-psicologo/`. Leia-os 
 | `ER-UniPsi.md` | Diagrama Entidade-Relacionamento completo em Mermaid |
 | `Sprints-UniPsi.md` | Plano de sprints do MVP — objetivos, entregas técnicas e critérios de aceite por sprint |
 | `Testes-UniPsi.md` | Plano de cobertura de testes — estratégia, ferramentas, casos por módulo e thresholds de CI |
+| `Debitos-UniPsi.md` | Índice vivo de débitos técnicos abertos e resolvidos — ver regra de atualização em "Convenção de releases" |
 | `releases/` | Histórico de releases — um arquivo `.md` por versão entregue |
 
 ---
@@ -204,6 +205,13 @@ releases/
 - Migrações de banco executadas
 - Variáveis de ambiente novas
 - Pontos de atenção / débitos técnicos
+
+**Regra obrigatória — `docs/Debitos-UniPsi.md`:** toda vez que a seção "Débitos técnicos" de uma
+release ganhar um item novo, ou um débito de release anterior for corrigido, atualizar também
+`docs/Debitos-UniPsi.md` na mesma sessão: adicionar a linha em "Débitos abertos" (ou mover de
+"Débitos abertos" para "Débitos resolvidos", preenchendo Resolvido em / Como). O arquivo de release
+é o registro histórico ponto-no-tempo; `Debitos-UniPsi.md` é o agregado sempre atualizado — nunca
+deixar um débito existir só em um dos dois.
 
 ---
 

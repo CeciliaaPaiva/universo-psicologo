@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 const LINKS = [
   { to: '/agenda', label: 'Agenda' },
   { to: '/plantao', label: 'Plantão' },
+  { to: '/prontuario', label: 'Prontuário' },
   { to: '/perfil', label: 'Perfil' },
 ]
 

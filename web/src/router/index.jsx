@@ -7,6 +7,8 @@ import { AprovacoesPage } from '@/pages/AprovacoesPage'
 import { AgendaPage } from '@/pages/AgendaPage'
 import { PlantaoPage } from '@/pages/PlantaoPage'
 import { PerfilPsicologoPage } from '@/pages/PerfilPsicologoPage'
+import { ProntuarioPage } from '@/pages/ProntuarioPage'
+import { ProntuarioDetalhePage } from '@/pages/ProntuarioDetalhePage'
 import { PsicologoLayout } from '@/layouts/PsicologoLayout'
 import { MarketplacePage } from '@/pages/MarketplacePage'
 import { PsicologoPublicProfilePage } from '@/pages/PsicologoPublicProfilePage'
@@ -31,6 +33,8 @@ export const router = createBrowserRouter([
           { path: '/agenda', element: <AgendaPage /> },
           { path: '/plantao', element: <PlantaoPage /> },
           { path: '/perfil', element: <PerfilPsicologoPage /> },
+          { path: '/prontuario', element: <ProntuarioPage /> },
+          { path: '/prontuario/:codinome', element: <ProntuarioDetalhePage /> },
           { path: '/', element: <AgendaPage /> },
         ],
       },

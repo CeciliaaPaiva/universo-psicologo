@@ -20,6 +20,7 @@ Toda a documentação de produto e arquitetura vive em [`docs/`](docs):
 | [`Arquitetura-UniPsi.md`](docs/Arquitetura-UniPsi.md) | Stack, estrutura de pacotes, fluxos técnicos |
 | [`ER-UniPsi.md`](docs/ER-UniPsi.md) | Diagrama entidade-relacionamento |
 | [`Testes-UniPsi.md`](docs/Testes-UniPsi.md) | Estratégia de cobertura de testes |
+| [`Debitos-UniPsi.md`](docs/Debitos-UniPsi.md) | Índice vivo de débitos técnicos — o que está aberto agora e o que já foi resolvido |
 | [`releases/`](releases) | Changelog por versão entregue |
 
 Contexto de convenções de código e regras de negócio para desenvolvimento assistido está em
@@ -39,7 +40,8 @@ Contexto de convenções de código e regras de negócio para desenvolvimento as
 | 0 — Fundação | Cadastro, autenticação, painel de aprovação | ✅ Entregue (`v0.1.0-fundacao`) |
 | 1 — Agenda e Plantão | Slots, Google Calendar, plantão de urgência, perfil do psicólogo | ✅ Entregue (`v0.2.0-agenda`) |
 | 2 — Marketplace | Busca, agendamento, precificação dinâmica | ✅ Entregue (`v0.3.0-marketplace`) |
-| 3 a 6 | Prontuário, chatbot, financeiro, administração/QA | 📋 Planejadas |
+| 3 — Prontuário | Anotações criptografadas, codinome, auditoria de acesso | ✅ Entregue (`v0.4.0-prontuario`) |
+| 4 a 6 | Chatbot, financeiro, administração/QA | 📋 Planejadas |
 
 Veja o changelog detalhado de cada entrega em [`releases/`](releases).
 
