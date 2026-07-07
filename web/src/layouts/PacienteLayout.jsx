@@ -16,19 +16,22 @@ export function PacienteLayout() {
     <div className="min-h-screen">
       <header className="border-b">
         <div className="mx-auto flex max-w-3xl items-center justify-between p-4">
-          <nav className="flex gap-4">
-            {LINKS.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) =>
-                  `text-sm font-medium ${isActive ? 'text-primary underline underline-offset-4' : 'text-muted-foreground'}`
-                }
-              >
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
+          <div className="flex items-center gap-6">
+            <img src="/unipsi-icon.png" alt="Universo Psicólogo" className="h-8 w-8" />
+            <nav className="flex gap-4">
+              {LINKS.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) =>
+                    `text-sm font-medium ${isActive ? 'text-primary underline underline-offset-4' : 'text-muted-foreground'}`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">{usuario?.nome}</span>
             <Button size="sm" variant="ghost" onClick={clearAuth}>

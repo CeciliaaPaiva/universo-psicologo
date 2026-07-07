@@ -41,7 +41,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
+      <img src="/unipsi-icon.png" alt="Universo Psicólogo" className="h-20 w-20" />
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Entrar</CardTitle>
