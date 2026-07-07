@@ -22,6 +22,7 @@ Toda a documentação de produto e arquitetura vive em [`docs/`](docs):
 | [`Testes-UniPsi.md`](docs/Testes-UniPsi.md) | Estratégia de cobertura de testes |
 | [`Debitos-UniPsi.md`](docs/Debitos-UniPsi.md) | Índice vivo de débitos técnicos — o que está aberto agora e o que já foi resolvido |
 | [`releases/`](releases) | Changelog por versão entregue |
+| [`atas/`](atas) | Atas de reunião com o stakeholder — uma por reunião |
 
 Contexto de convenções de código e regras de negócio para desenvolvimento assistido está em
 [`CLAUDE.md`](CLAUDE.md).

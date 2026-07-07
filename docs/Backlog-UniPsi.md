@@ -30,6 +30,8 @@
 | EP-08 | Relatório Financeiro |
 | EP-09 | Notificações |
 | EP-10 | Administração da Plataforma |
+| EP-11 | Anamnese e Perfil Clínico Básico |
+| EP-12 | Mensagens Internas |
 
 ---
 
@@ -108,16 +110,21 @@
 
 ### US-005 — Edição de Perfil do Paciente
 
+> **Revisado em 07/07/2026** (ver `atas/2026-07-07-alinhamento-sprint-4.md`) — a versão original desta
+> história permitia ao paciente editar a própria faixa de renda; o stakeholder decidiu que isso não
+> deve mais acontecer. O critério de recálculo automático de valor foi removido; a versão anterior
+> já estava implementada em `PUT /api/usuarios/paciente/perfil` (Sprint 2) e precisa ser revertida.
+
 **Como** paciente,  
-**quero** atualizar meus dados cadastrais e minha faixa de renda declarada,  
-**para que** o valor das sessões reflita minha situação atual.
+**quero** atualizar meus dados cadastrais, foto de perfil e idade,  
+**para que** meu perfil esteja sempre atualizado.
 
 **Critérios de aceitação:**
-- [ ] Paciente pode editar todos os dados pessoais
-- [ ] Atualização da faixa de renda recalcula o valor das próximas sessões (não afeta sessões já agendadas)
-- [ ] Histórico de alterações de faixa de renda é registrado internamente
+- [ ] Paciente pode editar nome, foto de perfil e idade
+- [ ] Paciente pode adicionar/trocar a foto de perfil (upload de imagem, mesmo padrão de arquivo usado no perfil do psicólogo)
+- [ ] **Faixa de renda não é editável pelo paciente.** É autodeclarada uma única vez no cadastro (US-002) e só pode ser alterada pelo fluxo de revisão de perfil financeiro conduzido pelo psicólogo e decidido pelo admin (US-017/US-027)
 
-**Prioridade:** Média | **Pontos:** 2
+**Prioridade:** Média | **Pontos:** 3
 
 ---
 
@@ -267,14 +274,18 @@
 
 ### US-014 🔴 — Buscar Psicólogos Disponíveis
 
+> **Revisado em 07/07/2026** — o campo de busca por "especialidade" foi renomeado para não colidir
+> conceitualmente com a especialização/abordagem do psicólogo (já exibida no card). Ver
+> `atas/2026-07-07-alinhamento-sprint-4.md`. Nome sugerido: **"Áreas de atuação"** (a confirmar).
+
 **Como** paciente,  
-**quero** buscar psicólogos disponíveis para terapia social com filtros por especialidade e disponibilidade,  
+**quero** buscar psicólogos disponíveis para terapia social com filtros por área de atuação e disponibilidade,  
 **para que** eu encontre um profissional adequado ao meu perfil e necessidade.
 
 **Critérios de aceitação:**
 - [ ] Listagem exibe psicólogos aprovados com sessões disponíveis
-- [ ] Filtros disponíveis: especialidade, dias/horários disponíveis
-- [ ] Card do psicólogo exibe: nome, especialidades, próximas disponibilidades e valor da sessão calculado para o perfil do paciente logado
+- [ ] Filtros disponíveis: **áreas de atuação** (temas/situações atendidas, ex.: ansiedade, luto, terapia de casal — exibidas como tags no card, distintas da especialização), dias/horários disponíveis
+- [ ] Card do psicólogo exibe: nome, especialização, tags de áreas de atuação, próximas disponibilidades e valor da sessão calculado para o perfil do paciente logado
 - [ ] Paciente pode acessar o perfil completo do psicólogo (abordagem, política de cancelamento, link externo de videochamada)
 
 **Prioridade:** Alta | **Pontos:** 8  
@@ -293,6 +304,7 @@
 - [ ] Sistema gera a sessão com valor calculado pelo perfil socioeconômico do paciente (faixa R$30–R$100)
 - [ ] Confirmação por e-mail enviada para paciente e psicólogo com data, horário e link externo de videochamada (se configurado)
 - [ ] Slot agendado é removido da disponibilidade visível para outros pacientes
+- [ ] **(Ajuste 07/07/2026)** Em "Meus agendamentos", quando a modalidade for pacote mensal, exibir o **valor da sessão avulsa** e o **valor total do pacote**, destacando a economia — não só "valor por sessão", que gerava confusão (ver `atas/2026-07-07-alinhamento-sprint-4.md`)
 
 **Prioridade:** Alta | **Pontos:** 5  
 **Depende de:** US-014
@@ -332,6 +344,7 @@
 - [ ] Alteração de faixa de renda não altera valor de sessões já confirmadas
 - [ ] Taxa de 20% calculada e registrada no `CobrancaService`; valor líquido exibido ao psicólogo no relatório financeiro
 - [ ] Cancelamento dentro do pacote mensal segue a política de 8h (RF-21b)
+- [ ] **(Ajuste 07/07/2026)** Paciente indica se o atendimento é individual ou **terapia de casal**; quando for casal, o valor cobrado é o **dobro** do valor individual da mesma faixa/modalidade — valores exatos a confirmar (tarefa do Victor, ver `atas/2026-07-07-alinhamento-sprint-4.md`)
 
 **Prioridade:** Alta | **Pontos:** 5  
 **Depende de:** US-002, US-015
@@ -377,6 +390,11 @@
 
 ### US-019 🔴 — Identificar Situação de Crise e Oferecer Suporte Imediato
 
+> **Ajuste 07/07/2026** (ver ata) — a busca de profissional deixa de se limitar a quem está de
+> plantão hoje: passa a incluir também psicólogos com a próxima disponibilidade mais próxima na
+> agenda, retornando o contato ao paciente. Link do CVV também mudou: chat em
+> `https://cvv.org.br/chat/` + ligação `tel:188`, não só o número.
+
 **Como** paciente em situação de crise,  
 **quero** que o chatbot reconheça meu estado e me ofereça orientações imediatas,  
 **para que** eu tenha algum suporte enquanto aguardo atendimento profissional.
@@ -384,8 +402,9 @@
 **Critérios de aceitação:**
 - [ ] Chatbot identifica palavras-chave e contexto de crise (ansiedade severa, pensamentos de autolesão, pânico)
 - [ ] Ao identificar crise: apresenta técnicas de suporte imediato (respiração 4-7-8, ancoragem 5-4-3-2-1, etc.)
-- [ ] Após oferecer suporte imediato, aciona o fluxo de plantão (US-010)
-- [ ] Se nenhum psicólogo estiver de plantão, chatbot informa e exibe contatos de emergência (CVV 188, SAMU 192)
+- [ ] Paciente pode deixar um contato (e-mail/telefone) de retorno, especialmente útil se a IA/sistema estiver indisponível
+- [ ] Após oferecer suporte imediato, aciona o fluxo de plantão (US-010) **e também busca psicólogos com a próxima disponibilidade mais próxima na agenda** (não só quem está de plantão hoje) — retorna esse contato ao paciente
+- [ ] Se ninguém for encontrado (nem plantão, nem disponibilidade próxima), chatbot informa e exibe contatos de emergência: **CVV** — chat [https://cvv.org.br/chat/](https://cvv.org.br/chat/) e ligação `tel:188` — e **SAMU** (192)
 - [ ] Chatbot **nunca simula diagnóstico** — qualquer tentativa do usuário de forçar isso é respondida com redirecionamento ao profissional
 
 **Prioridade:** Alta | **Pontos:** 8  
@@ -535,11 +554,81 @@
 
 ---
 
+## EP-11 — Anamnese e Perfil Clínico Básico
+
+> **Novo épico — reunião de 07/07/2026.** Ver `atas/2026-07-07-alinhamento-sprint-4.md`.
+
+### US-028 — Preencher Anamnese Básica
+
+> **Refinado em 07/07/2026** (adendo à ata) — a anamnese é sempre do paciente: nunca pública, e o
+> psicólogo só tem acesso temporário (ver US-030). Critérios de acesso do psicólogo foram
+> desmembrados para uma história própria.
+
+**Como** paciente,  
+**quero** preencher um formulário básico de anamnese antes da minha primeira sessão,  
+**para que** o psicólogo já chegue preparado no primeiro atendimento, sem depender só da conversa inicial.
+
+**Critérios de aceitação:**
+- [ ] Formulário inclui, entre outras: se já fez terapia antes, motivo de buscar terapia agora, se toma medicação controlada (lista final de perguntas é tarefa do Victor — ver ata)
+- [ ] Formulário é preenchido uma vez após o cadastro, em `/perfil-paciente` (não por psicólogo/sessão específica)
+- [ ] `/perfil-paciente` exibe aviso explicando o uso e o acesso temporário, copy sugerida: *"Preencha seu perfil com sua anamnese. Essa informação não será pública — o profissional só tem acesso quando você agendar e efetuar o pagamento, antes da primeira terapia. Depois disso, ele não terá mais acesso."*
+- [ ] Campo de contato do responsável só aparece **se o paciente se identificar como menor de idade**, acompanhado de uma explicação de por que é solicitado (prática clínica: atendimento a menores exige presença/consentimento do responsável, sobretudo na primeira sessão) — nunca exibido para pacientes maiores de idade
+
+**Prioridade:** Alta | **Pontos:** 5  
+**Depende de:** US-002, US-005
+
+---
+
+### US-030 — Acesso Temporário do Psicólogo à Anamnese
+
+> **Nova história — adendo de 07/07/2026.** A anamnese segue o mesmo padrão de proteção do
+> prontuário (criptografia + auditoria), mas com controle de acesso por **janela de tempo**, não
+> por autoria fixa — o psicólogo não é "dono" da anamnese como é das próprias anotações.
+
+**Como** psicólogo,  
+**quero** acessar a anamnese do paciente apenas entre o pagamento confirmado da primeira sessão e a
+realização dela,  
+**para que** eu me prepare para o primeiro atendimento sem reter esse dado sensível depois.
+
+**Critérios de aceitação:**
+- [ ] Psicólogo só visualiza a anamnese de um paciente se existir uma `Sessao` entre os dois com `Cobranca` paga **e** essa sessão ainda não foi marcada como `REALIZADA`
+- [ ] Assim que a sessão é marcada `REALIZADA`, o acesso à anamnese é revogado para esse psicólogo
+- [ ] Se o paciente agendar depois com outro psicólogo, esse novo profissional recebe sua própria janela de acesso (independente, não compartilhada)
+- [ ] Anamnese é armazenada cifrada (mesmo padrão AES-256-GCM do prontuário, via `CriptografiaService`) — conteúdo nunca em texto claro no banco
+- [ ] Toda leitura da anamnese por um psicólogo é registrada em auditoria (mesmo espírito de `AuditoriaProntuarioService`)
+- [ ] Tentativa de leitura fora da janela de acesso é bloqueada (mesmo padrão de `AcessoProntuarioNegadoException` → 403)
+
+**Prioridade:** Alta | **Pontos:** 5  
+**Depende de:** US-028, US-015, US-021, US-022 *(cobrança e pagamento — módulo financeiro, Sprint 5)*
+
+---
+
+## EP-12 — Mensagens Internas
+
+> **Novo épico — reunião de 07/07/2026.** Ver `atas/2026-07-07-alinhamento-sprint-4.md`.
+
+### US-029 — Trocar Mensagens na Plataforma Após Pagamento
+
+**Como** paciente ou psicólogo,  
+**quero** trocar mensagens diretamente na plataforma depois que a sessão for agendada e paga,  
+**para que** eu possa combinar detalhes do atendimento sem precisar de outro canal externo.
+
+**Critérios de aceitação:**
+- [ ] Chat entre paciente e psicólogo só é liberado quando a `Sessao` correspondente tem `Cobranca` com status `PAGO`
+- [ ] Antes do pagamento confirmado, não há canal de mensagens entre as partes
+- [ ] Mensagens ficam associadas à sessão/relação psicólogo-paciente
+- [ ] Notificação (e-mail ou in-app) quando há mensagem nova
+
+**Prioridade:** Média | **Pontos:** 8  
+**Depende de:** US-015, US-021, US-022 *(cobrança e pagamento — módulo financeiro, Sprint 5)*
+
+---
+
 ## Resumo do Backlog
 
 | Épico | Histórias | Pontos Totais |
 |---|---|---|
-| EP-01 Cadastro e Autenticação | US-001 a US-005 | 18 |
+| EP-01 Cadastro e Autenticação | US-001 a US-005 | 19 |
 | EP-02 Gestão de Agenda | US-006 a US-008 | 16 |
 | EP-03 Plantão | US-009 a US-010 | 6 |
 | EP-04 Prontuário Eletrônico | US-011 a US-013 | 11 |
@@ -549,11 +638,23 @@
 | EP-08 Relatório Financeiro | US-024 | 5 |
 | EP-09 Notificações | US-025 | 3 |
 | EP-10 Administração | US-026 a US-027 | 10 |
-| **Total** | **27 histórias** | **117 pontos** |
+| EP-11 Anamnese e Perfil Clínico Básico *(novo, 07/07/2026)* | US-028, US-030 | 10 |
+| EP-12 Mensagens Internas *(novo, 07/07/2026)* | US-029 | 8 |
+| **Total** | **30 histórias** | **136 pontos** |
+
+> A pontuação de EP-01 subiu de 18→19 porque US-005 foi revisada em 07/07/2026 (removeu edição de
+> faixa de renda pelo paciente, adicionou foto de perfil e idade). Ver
+> `atas/2026-07-07-alinhamento-sprint-4.md`.
 
 ---
 
 ## Sugestão de Ordem de Desenvolvimento (MVP)
+
+> ⚠️ Esta seção ficou **defasada** em relação à ordem real seguida pelo projeto — ver
+> `Sprints-UniPsi.md`, que é o plano efetivamente executado (Sprint 3 = Prontuário, Sprint 4 =
+> Chatbot, não como sugerido abaixo). Mantida aqui só como registro histórico do planejamento
+> inicial. As histórias novas desta reunião (US-028, US-029) e os ajustes marcados "07/07/2026"
+> ainda não têm sprint definida — ver `Sprints-UniPsi.md`.
 
 ### Sprint 0 — Fundação
 US-001, US-002, US-003, US-026

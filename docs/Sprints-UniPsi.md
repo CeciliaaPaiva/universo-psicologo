@@ -1,10 +1,10 @@
 # Plano de Sprints — Universo Psicólogo (MVP)
 
-**Versão:** 1.0  
-**Data:** 30/06/2026  
+**Versão:** 1.1  
+**Data:** 30/06/2026 (atualizado em 07/07/2026 — ver `atas/2026-07-07-alinhamento-sprint-4.md`)  
 **Referência:** Backlog-UniPsi.md, Arquitetura-UniPsi.md  
-**Total de histórias:** 27 | **Total de pontos:** 117 | **Sprints:** 6 (Sprint 0 a Sprint 5)  
-**Duração sugerida por sprint:** 2 semanas
+**Total de histórias:** 30 | **Total de pontos:** 136 | **Sprints:** 8 (Sprint 0 a Sprint 6, incluindo 4.5 e 5.5)  
+**Duração sugerida por sprint:** 2 semanas (Sprints 4.5 e 5.5 são curtas — ajuste pontual, não 2 semanas cheias)
 
 ---
 
@@ -42,9 +42,11 @@ Uma história está concluída quando:
 | Sprint 2 | **Marketplace — CORE da plataforma** | US-005, US-013, US-014, US-015, US-016 | 21 | `v0.3.0-marketplace` |
 | Sprint 3 | Prontuário eletrônico — Inovação #1 | US-011, US-012 | 8 | `v0.4.0-prontuario` |
 | Sprint 4 | Chatbot de triagem — Inovação #2 | US-018, US-019, US-020, US-010 | 22 | `v0.5.0-chatbot` |
+| Sprint 4.5 | Ajustes pós-demo (reunião 07/07/2026) | US-028 + ajustes em US-005/014/015/016/019 | 5+ | `v0.5.1-ajustes-pos-demo` |
 | Sprint 5 | Financeiro e notificações | US-021, US-022, US-023, US-024, US-025 | 16 | `v0.6.0-financeiro` |
+| Sprint 5.5 | Anamnese (acesso temporário) + Mensagens internas (dependem do financeiro) | US-029, US-030 | 13 | `v0.6.1-anamnese-mensagens` |
 | Sprint 6 | Administração, QA e encerramento | US-017, US-027 + QA + LGPD | 10 | `v1.0.0-mvp` |
-| **Total** | | **27 histórias** | **117** | |
+| **Total** | | **30 histórias** | **136** | |
 
 > **Sprint 3 tem 8 pontos** intencionalmente — prontuário é o módulo mais sensível (LGPD, criptografia) e merece sprint dedicado sem concorrência com outras entregas.
 
@@ -393,6 +395,49 @@ EM SITUAÇÃO DE CRISE (ansiedade severa, pensamentos de autolesão, pânico):
 
 ---
 
+## Sprint 4.5 — Ajustes Pós-Demo (reunião de 07/07/2026)
+
+**Objetivo:** Aplicar os ajustes de UX e as regras de negócio definidas na reunião de alinhamento
+com o stakeholder após a demo das Sprints 0–4, antes de avançar para o Financeiro. São itens
+pequenos e **não dependem do módulo financeiro** — por isso entram como sprint curta e dedicada,
+em vez de esperar a Sprint 5. Ata completa: `atas/2026-07-07-alinhamento-sprint-4.md`.
+
+> `US-029` (Mensagens Internas) e `US-030` (acesso temporário do psicólogo à anamnese) **ficam de
+> fora** desta sprint — ambas dependem de `Cobranca`/pagamento, que só existe a partir da Sprint 5.
+> Ver nota no fim desta seção.
+
+### Escopo
+
+| Item | Onde | Requisito |
+|---|---|---|
+| Exibir valor avulsa + total do pacote + economia | `/agendamentos` | RF-43 |
+| Foto de perfil editável pelo paciente | `/perfil-paciente` | RF-36 |
+| Remover edição de faixa de renda pelo paciente | `/perfil-paciente` | RF-06 |
+| Campo idade | `/perfil-paciente`, cadastro | RF-37 |
+| Formulário de anamnese básica (US-028) | novo, ligado a `/perfil-paciente` | RF-38 |
+| Regra de menor de idade (1ª sessão com responsável) | anamnese/perfil | RF-37 |
+| Busca ampliada de profissional em crise (plantão + próxima disponibilidade) | `/chatbot` | RF-40 |
+| Link do CVV para chat (`https://cvv.org.br/chat/`) e `tel:188` | `/chatbot` | RF-40 |
+| Renomear campo de busca do marketplace ("Áreas de atuação") | `/marketplace` | RF-42 |
+| Terapia de casal = dobro do valor individual | `PrecificacaoService` | RF-41 |
+
+### Histórias
+
+US-028 (Anamnese, 5 pts) + ajustes sem história formal própria em US-005 (perfil paciente, já
+revisada), US-014 (marketplace), US-015/US-016 (agendamentos/precificação), US-019 (chatbot) — ver
+critérios de aceitação atualizados em `Backlog-UniPsi.md`.
+
+**Pontos:** 5 (US-028) + esforço de ajuste nas histórias já entregues (não repontuado)
+**Release sugerida:** `v0.5.1-ajustes-pos-demo`
+
+### Nota — US-029 e US-030 (Mensagens Internas e Acesso Temporário à Anamnese)
+
+Alocadas como **Sprint 5.5**, logo após o Financeiro (ver "Visão Geral" acima) — ambas só fazem
+sentido depois que `Cobranca`/status de pagamento estiver implementado, já que a regra de negócio
+das duas ("libera depois do pagamento" / "acesso até a sessão ser realizada") depende disso.
+
+---
+
 ## Sprint 5 — Financeiro e Notificações
 
 **Período:** Semanas 11–12  
@@ -533,8 +578,10 @@ US-017 (Solicitar revisão) ──► US-027 (Admin decide)
 | Sprint 2 | **Marketplace — CORE** | 23 | Médio |
 | Sprint 3 | Prontuário — Inovação #1 | 8 | Baixo (sprint dedicado) |
 | Sprint 4 | Chatbot — Inovação #2 | 22 | Médio |
+| Sprint 4.5 | Ajustes pós-demo (07/07/2026) | 5+ | Baixo |
 | Sprint 5 | Financeiro e Notificações | 16 | Baixo |
+| Sprint 5.5 | Anamnese (acesso temporário) + Mensagens Internas | 13 | Baixo |
 | Sprint 6 | Admin, QA e Encerramento | 10 | Baixo |
-| **Total** | | **119** | |
+| **Total** | | **138** | |
 
 > A reestruturação eliminou o Sprint 1 sobrecarregado (30 pts → 22 pts) e garante que a plataforma já funciona ao final do Sprint 2 — antes de qualquer inovação.

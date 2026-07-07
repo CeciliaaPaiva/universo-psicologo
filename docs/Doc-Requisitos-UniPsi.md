@@ -49,7 +49,7 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 | RF-03 | O administrador deve ser capaz de aprovar, reprovar ou solicitar complementação de cadastro de psicólogos. O profissional deve ser notificado por e-mail em qualquer um dos casos. | Admin |
 | RF-04 | O sistema deve permitir o cadastro de pacientes com dados pessoais e autodeclaração de perfil socioeconômico (renda domiciliar per capita). A conta é ativada imediatamente após o cadastro. Somente pacientes enquadrados em `FAIXA_1` a `FAIXA_4` (até 2 SM per capita) são elegíveis para a terapia social. Pacientes que declarem renda acima desse limite devem ser informados da inelegibilidade e orientados a buscar atendimento particular. | Paciente |
 | RF-05 | O sistema deve prover autenticação segura para psicólogos e pacientes, com sessão protegida por token e logout automático por inatividade. | Todos |
-| RF-06 | O sistema deve permitir que psicólogos e pacientes editem seus perfis após o cadastro. | Todos |
+| RF-06 | O sistema deve permitir que psicólogos e pacientes editem seus perfis após o cadastro. **(Revisado em 07/07/2026 — ver ata em `atas/`.)** Para pacientes, a **faixa de renda não é editável** por esse fluxo — é autodeclarada uma única vez no cadastro (RF-04) e só muda via revisão de perfil financeiro conduzida pelo psicólogo/admin (RF-22). Demais dados (nome, foto de perfil, idade) continuam editáveis pelo paciente. | Todos |
 
 ### 3.2 Gestão de Agenda
 
@@ -65,7 +65,7 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 | ID | Requisito | Ator |
 |---|---|---|
 | RF-11 | O psicólogo deve poder registrar sua disponibilidade para plantão, selecionando os dias em que está ativo. | Psicólogo |
-| RF-12 | Quando o chatbot identificar um paciente em situação de crise, o sistema deve buscar psicólogos com plantão ativo no dia e notificá-los por e-mail. | Sistema |
+| RF-12 | Quando o chatbot identificar um paciente em situação de crise, o sistema deve buscar psicólogos com plantão ativo no dia e notificá-los por e-mail. **(Ampliado em 07/07/2026, ver RF-40.)** | Sistema |
 | RF-13 | O sistema deve apresentar ao paciente os dados de contato do psicólogo de plantão notificado para que o atendimento possa ocorrer. | Sistema |
 
 ### 3.4 Prontuário Eletrônico
@@ -81,10 +81,10 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 
 | ID | Requisito | Ator |
 |---|---|---|
-| RF-18 | O paciente deve poder buscar psicólogos disponíveis para terapia social, com filtros por especialidade e disponibilidade. | Paciente |
-| RF-19 | O sistema deve exibir o perfil público do psicólogo (especialidades, abordagem, disponibilidade e política de cancelamento). | Paciente |
+| RF-18 | O paciente deve poder buscar psicólogos disponíveis para terapia social, com filtros por **área de atuação** (temas/situações atendidas — ex.: ansiedade, luto, terapia de casal) e disponibilidade. **(Renomeado em 07/07/2026 — ver RF-42; antes o filtro se chamava "especialidade" e colidia conceitualmente com a especialização do profissional.)** | Paciente |
+| RF-19 | O sistema deve exibir o perfil público do psicólogo (especialização, áreas de atuação, abordagem, disponibilidade e política de cancelamento). | Paciente |
 | RF-20 | O paciente deve poder agendar uma sessão diretamente pelo marketplace, sem obrigatoriedade de passar pelo chatbot. | Paciente |
-| RF-21 | O valor da sessão deve ser calculado automaticamente com base na **renda domiciliar per capita** autodeclarada pelo paciente e na **modalidade de atendimento** escolhida (avulsa ou pacote mensal). | Sistema |
+| RF-21 | O valor da sessão deve ser calculado automaticamente com base na **renda domiciliar per capita** autodeclarada pelo paciente, na **modalidade de atendimento** escolhida (avulsa ou pacote mensal) e no **tipo de atendimento** (individual ou casal — ver RF-41). | Sistema |
 
 **Tabela de precificação — Terapia Social**
 
@@ -111,10 +111,10 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 > Pacientes com renda per capita acima de R$ 3.242,00 **não são elegíveis** para a terapia social. O sistema deve impedir o cadastro nessa condição e orientar o usuário a buscar atendimento particular.
 
 **Regras de aplicação:**
-- Renda domiciliar per capita autodeclarada no cadastro (total ÷ número de moradores).
-- Valor exibido ao paciente antes da confirmação, conforme modalidade selecionada.
-- Alterações de faixa afetam apenas novos agendamentos; sessões já confirmadas mantêm o valor original.
-- Cálculo centralizado em `PrecificacaoService(FaixaRenda, Modalidade)` → `BigDecimal`. Para renda fora do escopo, lança `PacienteNaoElegivelException`.
+- Renda domiciliar per capita autodeclarada **uma única vez** no cadastro (total ÷ número de moradores) — **não editável pelo paciente depois disso (revisado em 07/07/2026, ver RF-06 e RF-22).**
+- Valor exibido ao paciente antes da confirmação, conforme modalidade e tipo de atendimento (individual/casal) selecionados.
+- Alterações de faixa (via revisão de perfil financeiro, RF-22) afetam apenas novos agendamentos; sessões já confirmadas mantêm o valor original.
+- Cálculo centralizado em `PrecificacaoService(FaixaRenda, Modalidade, TipoAtendimento)` → `BigDecimal`. Para renda fora do escopo, lança `PacienteNaoElegivelException`. **(Assinatura ganha `TipoAtendimento` em 07/07/2026 — ver RF-41; ainda não implementado.)**
 - Taxa da plataforma: **20% por sessão**, aplicado pelo `CobrancaService` via `TAXA_PLATAFORMA_PERCENTUAL`. |
 | RF-21a | O paciente deve poder escolher a modalidade de atendimento no ato do agendamento: **Avulsa** (sessão única) ou **Pacote Mensal** (4 sessões com 5% de desconto). | Paciente |
 | RF-21b | A plataforma deve impor a **política de cancelamento**: cancelamento livre até 8h antes do atendimento. Cancelamentos com menos de 8h ficam registrados e o psicólogo decide — sem penalidade automática da plataforma — entre cobrar a sessão ou realocar para outra data. A regra se aplica igualmente a sessões avulsas e a sessões individuais dentro de um pacote. | Sistema / Psicólogo |
@@ -154,6 +154,27 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 | RF-35 | O sistema deve notificar o psicólogo de plantão por e-mail quando um paciente em crise precisar de atendimento urgente. | Sistema |
 
 > **Tecnologia recomendada para e-mail no MVP:** Resend ou SendGrid (até 100 e-mails/dia no tier gratuito de ambos).
+
+---
+
+### 3.10 Ajustes e Novas Funcionalidades — Reunião de 07/07/2026
+
+> Requisitos definidos na reunião de alinhamento com o stakeholder após a demo das Sprints 0–4.
+> Ata completa em `atas/2026-07-07-alinhamento-sprint-4.md`. Nenhum destes está implementado
+> ainda — entram no backlog para as próximas sprints (ver EP-11/EP-12 em `Backlog-UniPsi.md`).
+
+| ID | Requisito | Ator |
+|---|---|---|
+| RF-36 | O paciente deve poder adicionar e editar uma **foto de perfil**. | Paciente |
+| RF-37 | O cadastro/perfil do paciente deve registrar a **idade** (ou data de nascimento, com idade calculada). Se o paciente for menor de idade, o sistema deve sinalizar ao psicólogo que a **primeira sessão deve ocorrer com o responsável**. **(Refinado — adendo 07/07/2026)** O campo de contato do responsável só deve ser exibido **condicionalmente**, quando o paciente se identifica como menor — nunca como campo genérico — e deve vir acompanhado de explicação sobre por que é solicitado (prática clínica em psicologia). | Paciente / Sistema |
+| RF-38 | O sistema deve disponibilizar um **formulário de anamnese básica** para o paciente preencher em `/perfil-paciente`, uma única vez, antes da primeira sessão (se já fez terapia antes, motivo de buscar terapia agora, se toma medicação controlada, entre outras — lista final a definir). **(Refinado — adendo 07/07/2026)** A anamnese pertence sempre ao paciente — não é pública nem de acesso permanente ao psicólogo. A tela deve exibir aviso explicando isso, ver RF-38a. | Paciente / Psicólogo |
+| RF-38a | O acesso do psicólogo à anamnese de um paciente deve ser **temporário**: liberado somente entre o **pagamento confirmado da primeira sessão** com aquele paciente e a **realização dessa sessão**. Após a sessão ser realizada, o acesso deve ser automaticamente revogado. Se o paciente agendar depois com outro psicólogo, este recebe sua própria janela de acesso, independente. **(Novo — adendo 07/07/2026, não implementado.)** | Sistema |
+| RF-38b | O conteúdo da anamnese deve ser **criptografado em repouso** (mesmo padrão AES-256-GCM do prontuário — ver RNF-01) e toda leitura por um psicólogo deve ser **registrada em auditoria** (mesmo espírito do controle de acesso de RF-16). Fora da janela de acesso (RF-38a), a tentativa de leitura deve ser bloqueada. **(Novo — adendo 07/07/2026, não implementado.)** | Sistema |
+| RF-39 | O sistema deve permitir **mensagens diretas entre psicólogo e paciente** dentro da plataforma, liberadas **somente após a sessão estar agendada e paga**. Antes disso, não deve existir canal de mensagens entre as partes. | Paciente / Psicólogo |
+| RF-40 | Ao identificar situação de crise (RF-12), o sistema deve buscar tanto psicólogos **de plantão ativo no dia** quanto psicólogos **com a próxima disponibilidade mais próxima na agenda**, e retornar o contato encontrado ao paciente — a busca não fica restrita a quem está de plantão. | Sistema |
+| RF-41 | O valor da **terapia de casal** deve ser o **dobro** do valor da sessão individual/convencional, na mesma faixa de renda e modalidade. Valores exatos a confirmar. | Sistema |
+| RF-42 | O campo de busca do marketplace hoje chamado "especialidade" deve ser renomeado para não colidir com a especialização/abordagem do psicólogo (já exibida no perfil). Passa a representar **áreas de atuação** (temas/situações atendidas, exibidas como tags) — nome final a confirmar com o time (sugestão: "Áreas de atuação"). | Sistema |
+| RF-43 | Em "Meus agendamentos", quando a modalidade for pacote mensal, o sistema deve exibir o **valor da sessão avulsa** e o **valor total do pacote**, destacando a economia — não apenas o valor por sessão. | Sistema |
 
 ---
 
@@ -205,8 +226,8 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 |---|---|
 | **Ator principal** | Paciente |
 | **Pré-condição** | Nenhuma |
-| **Fluxo principal** | 1. Paciente acessa a plataforma e seleciona "Cadastrar como paciente". 2. Preenche dados pessoais. 3. Preenche autodeclaração de perfil socioeconômico (faixa de renda). 4. Confirma cadastro. 5. Sistema ativa a conta imediatamente. |
-| **Pós-condição** | Conta de paciente ativa. Valor das sessões calculado com base no perfil declarado. |
+| **Fluxo principal** | 1. Paciente acessa a plataforma e seleciona "Cadastrar como paciente". 2. Preenche dados pessoais e idade. 3. Preenche autodeclaração de perfil socioeconômico (faixa de renda) — **definida nesta única vez** (RF-06, RF-37). 4. Confirma cadastro. 5. Sistema ativa a conta imediatamente. 6. *(RF-38, 07/07/2026)* Paciente é convidado a preencher a anamnese básica antes da primeira sessão. |
+| **Pós-condição** | Conta de paciente ativa. Valor das sessões calculado com base no perfil declarado. Faixa de renda só muda por revisão de perfil financeiro (UC-09), nunca por autoedição. |
 
 ---
 
@@ -239,8 +260,8 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 |---|---|
 | **Ator principal** | Paciente |
 | **Pré-condição** | Paciente com conta ativa. |
-| **Fluxo principal** | 1. Paciente acessa o marketplace. 2. Aplica filtros (especialidade, disponibilidade). 3. Visualiza perfil público do psicólogo (abordagem, especialidades, política de cancelamento). 4. Seleciona horário disponível e confirma o agendamento. 5. Sistema registra a sessão e envia confirmação por e-mail para paciente e psicólogo. |
-| **Pós-condição** | Sessão agendada. Cobrança gerada com valor calculado pelo perfil socioeconômico do paciente. |
+| **Fluxo principal** | 1. Paciente acessa o marketplace. 2. Aplica filtros (**área de atuação** — RF-42 —, disponibilidade). 3. Visualiza perfil público do psicólogo (abordagem, especialização, áreas de atuação, política de cancelamento). 4. Seleciona horário disponível, escolhe modalidade e **tipo de atendimento (individual/casal — RF-41)**, e confirma o agendamento. 5. Sistema registra a sessão e envia confirmação por e-mail para paciente e psicólogo. |
+| **Pós-condição** | Sessão agendada. Cobrança gerada com valor calculado pelo perfil socioeconômico do paciente, modalidade e tipo de atendimento. |
 
 ---
 
@@ -252,7 +273,7 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 | **Ator secundário** | Chatbot, Sistema |
 | **Pré-condição** | Nenhuma (acesso público). |
 | **Fluxo principal** | 1. Paciente inicia conversa com o chatbot. 2. Chatbot realiza triagem com perguntas sobre estado emocional e contexto. 3. Chatbot identifica necessidade de suporte não urgente e encaminha o paciente para o marketplace, sugerindo psicólogos compatíveis. |
-| **Fluxo alternativo — Crise** | 3a. Chatbot identifica sinais de crise. 4a. Chatbot oferece orientações imediatas (respiração, ancoragem sensorial). 5a. Sistema busca psicólogos com plantão ativo no dia e os notifica por e-mail. 6a. Chatbot apresenta ao paciente os dados de contato do profissional. |
+| **Fluxo alternativo — Crise** | 3a. Chatbot identifica sinais de crise. 4a. Chatbot oferece orientações imediatas (respiração, ancoragem sensorial) e convida o paciente a deixar um contato de retorno. 5a. Sistema busca psicólogos **de plantão ativo no dia e/ou com a próxima disponibilidade mais próxima na agenda** (RF-40) e os notifica por e-mail. 6a. Chatbot apresenta ao paciente os dados de contato do profissional encontrado — ou, se ninguém for encontrado, os contatos de emergência CVV ([https://cvv.org.br/chat/](https://cvv.org.br/chat/) / `tel:188`) e SAMU (192). |
 | **Regra de negócio** | O chatbot não deve, em nenhuma circunstância, emitir diagnóstico clínico ou sugerir medicação. |
 | **Pós-condição** | Paciente encaminhado a um psicólogo (via marketplace ou plantão). |
 
@@ -278,7 +299,7 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 | **Ator secundário** | Administrador |
 | **Pré-condição** | Psicólogo com sessões em andamento com o paciente em questão. |
 | **Fluxo principal** | 1. Psicólogo identifica inconsistência no perfil socioeconômico do paciente. 2. Abre solicitação de revisão via painel, descrevendo a suspeita. 3. Sistema registra a solicitação e notifica o administrador. 4. Administrador avalia e toma uma decisão (manter ou atualizar o perfil do paciente). 5. Psicólogo é notificado do resultado por e-mail. |
-| **Regra de negócio** | O atendimento não é suspenso durante a revisão. Não há prazo definido para a decisão. |
+| **Regra de negócio** | O atendimento não é suspenso durante a revisão. Não há prazo definido para a decisão. **(07/07/2026)** Este é o **único** fluxo pelo qual a faixa de renda de um paciente muda depois do cadastro — o paciente não a edita diretamente (RF-06). |
 | **Pós-condição** | Perfil financeiro do paciente mantido ou atualizado. |
 
 ---
@@ -331,3 +352,6 @@ O escopo deste documento cobre o **MVP (versão inicial)** da plataforma, confor
 | Gateway de pagamento | A definir para versão pós-MVP. |
 | Critérios formais de aprovação/reprovação de psicólogos | A documentar em processo interno do time de administração. |
 | Integração de agenda | Google Calendar API — definido na arquitetura. |
+| Valor exato da terapia de casal (RF-41) | Regra definida (dobro do individual) na reunião de 07/07/2026; valores finais são tarefa do Victor. |
+| Perguntas do formulário de anamnese básica (RF-38) | Tarefa do Victor — ver `atas/2026-07-07-alinhamento-sprint-4.md`. |
+| Nome final do campo de busca do marketplace (RF-42) | Sugestão "Áreas de atuação" proposta em 07/07/2026 — a confirmar com o time. |
