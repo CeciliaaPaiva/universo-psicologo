@@ -1,11 +1,15 @@
 package br.com.unipsi.notificacao.service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class EmailService {
+
+    private static final DateTimeFormatter FORMATO_DATA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
 
     private final ResendClient resendClient;
 
@@ -40,5 +44,42 @@ public class EmailService {
                 <p>Precisamos de mais informações para avaliar seu cadastro.</p>
                 <p><strong>Detalhes:</strong> %s</p>
                 """.formatted(nome, motivo));
+    }
+
+    public void enviarConfirmacaoAgendamentoPaciente(
+            String email, String nomePaciente, String nomePsicologo, LocalDateTime inicio, String linkVideochamada) {
+        resendClient.enviar(email, "Sessão agendada — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>Sua sessão com <strong>%s</strong> foi agendada para <strong>%s</strong>.</p>
+                %s
+                """.formatted(nomePaciente, nomePsicologo, inicio.format(FORMATO_DATA_HORA), linkVideochamadaHtml(linkVideochamada)));
+    }
+
+    public void enviarConfirmacaoAgendamentoPsicologo(
+            String email, String nomePsicologo, String nomePaciente, LocalDateTime inicio, String linkVideochamada) {
+        resendClient.enviar(email, "Nova sessão agendada — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>Você tem uma nova sessão agendada com <strong>%s</strong> para <strong>%s</strong>.</p>
+                %s
+                """.formatted(nomePsicologo, nomePaciente, inicio.format(FORMATO_DATA_HORA), linkVideochamadaHtml(linkVideochamada)));
+    }
+
+    public void enviarCancelamentoSessao(
+            String email, String nomePaciente, String nomePsicologo, LocalDateTime inicio, String motivo) {
+        resendClient.enviar(email, "Sessão cancelada — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>Sua sessão com <strong>%s</strong> em <strong>%s</strong> foi cancelada pelo psicólogo.</p>
+                %s
+                """.formatted(
+                nomePaciente,
+                nomePsicologo,
+                inicio.format(FORMATO_DATA_HORA),
+                (motivo != null && !motivo.isBlank()) ? "<p><strong>Motivo:</strong> %s</p>".formatted(motivo) : ""));
+    }
+
+    private String linkVideochamadaHtml(String linkVideochamada) {
+        return (linkVideochamada != null && !linkVideochamada.isBlank())
+                ? "<p>Link da videochamada: <a href=\"%s\">%s</a></p>".formatted(linkVideochamada, linkVideochamada)
+                : "";
     }
 }

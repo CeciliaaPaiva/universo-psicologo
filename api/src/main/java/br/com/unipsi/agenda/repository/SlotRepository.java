@@ -13,6 +13,8 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
 
     List<Slot> findByPsicologoIdOrderByInicio(UUID psicologoId);
 
+    List<Slot> findByPsicologoIdAndDisponivelTrueAndInicioAfterOrderByInicio(UUID psicologoId, LocalDateTime apos);
+
     boolean existsByPsicologoIdAndInicioLessThanAndFimGreaterThan(
             UUID psicologoId, LocalDateTime fim, LocalDateTime inicio);
 }

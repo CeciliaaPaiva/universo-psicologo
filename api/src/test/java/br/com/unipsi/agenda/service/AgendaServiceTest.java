@@ -9,9 +9,12 @@ import static org.mockito.Mockito.when;
 
 import br.com.unipsi.agenda.domain.Slot;
 import br.com.unipsi.agenda.domain.SlotIndisponivelException;
+import br.com.unipsi.agenda.domain.StatusSessao;
 import br.com.unipsi.agenda.dto.CriarSlotRequest;
 import br.com.unipsi.agenda.dto.SlotResponse;
+import br.com.unipsi.agenda.repository.SessaoRepository;
 import br.com.unipsi.agenda.repository.SlotRepository;
+import br.com.unipsi.notificacao.service.EmailService;
 import br.com.unipsi.usuario.domain.Psicologo;
 import br.com.unipsi.usuario.repository.PsicologoRepository;
 import java.time.LocalDateTime;
@@ -36,6 +39,12 @@ class AgendaServiceTest {
 
     @Mock
     private GoogleCalendarService googleCalendarService;
+
+    @Mock
+    private SessaoRepository sessaoRepository;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AgendaService agendaService;
@@ -106,6 +115,7 @@ class AgendaServiceTest {
                 .googleEventId("google-event-1")
                 .build();
         when(slotRepository.findById(slotId)).thenReturn(Optional.of(slot));
+        when(sessaoRepository.findBySlotIdAndStatus(slotId, StatusSessao.AGENDADA)).thenReturn(Optional.empty());
 
         agendaService.cancelar(psicologoId, slotId, "Imprevisto");
 
@@ -122,5 +132,47 @@ class AgendaServiceTest {
 
         assertThatThrownBy(() -> agendaService.cancelar(psicologoId, slotId, null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void cancelar_deveCancelarSessaoVinculadaENotificarPacienteSemRemoverSlot() {
+        UUID slotId = UUID.randomUUID();
+        Slot slot = Slot.builder()
+                .id(slotId)
+                .psicologo(psicologo)
+                .inicio(LocalDateTime.now().plusDays(1))
+                .fim(LocalDateTime.now().plusDays(1).plusHours(1))
+                .disponivel(false)
+                .build();
+
+        br.com.unipsi.usuario.domain.Usuario usuarioPaciente = br.com.unipsi.usuario.domain.Usuario.builder()
+                .nome("Paciente Teste")
+                .email("paciente@teste.com")
+                .build();
+        br.com.unipsi.usuario.domain.Paciente paciente =
+                br.com.unipsi.usuario.domain.Paciente.builder().usuario(usuarioPaciente).build();
+        br.com.unipsi.usuario.domain.Usuario usuarioPsicologo =
+                br.com.unipsi.usuario.domain.Usuario.builder().nome("Psicólogo Teste").build();
+        psicologo.setUsuario(usuarioPsicologo);
+
+        br.com.unipsi.agenda.domain.Sessao sessao = br.com.unipsi.agenda.domain.Sessao.builder()
+                .id(UUID.randomUUID())
+                .slot(slot)
+                .paciente(paciente)
+                .psicologo(psicologo)
+                .status(StatusSessao.AGENDADA)
+                .build();
+
+        when(slotRepository.findById(slotId)).thenReturn(Optional.of(slot));
+        when(sessaoRepository.findBySlotIdAndStatus(slotId, StatusSessao.AGENDADA)).thenReturn(Optional.of(sessao));
+
+        agendaService.cancelar(psicologoId, slotId, "Imprevisto");
+
+        assertThat(sessao.getStatus()).isEqualTo(StatusSessao.CANCELADA);
+        assertThat(sessao.getCanceladoEm()).isNotNull();
+        verify(sessaoRepository).save(sessao);
+        verify(emailService)
+                .enviarCancelamentoSessao("paciente@teste.com", "Paciente Teste", "Psicólogo Teste", slot.getInicio(), "Imprevisto");
+        verify(slotRepository, org.mockito.Mockito.never()).delete(any());
     }
 }

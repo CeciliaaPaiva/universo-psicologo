@@ -8,6 +8,11 @@ import { AgendaPage } from '@/pages/AgendaPage'
 import { PlantaoPage } from '@/pages/PlantaoPage'
 import { PerfilPsicologoPage } from '@/pages/PerfilPsicologoPage'
 import { PsicologoLayout } from '@/layouts/PsicologoLayout'
+import { MarketplacePage } from '@/pages/MarketplacePage'
+import { PsicologoPublicProfilePage } from '@/pages/PsicologoPublicProfilePage'
+import { AgendamentosPage } from '@/pages/AgendamentosPage'
+import { PerfilPacientePage } from '@/pages/PerfilPacientePage'
+import { PacienteLayout } from '@/layouts/PacienteLayout'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -27,6 +32,20 @@ export const router = createBrowserRouter([
           { path: '/plantao', element: <PlantaoPage /> },
           { path: '/perfil', element: <PerfilPsicologoPage /> },
           { path: '/', element: <AgendaPage /> },
+        ],
+      },
+    ],
+  },
+  {
+    element: <PrivateRoute role="PACIENTE" />,
+    children: [
+      {
+        element: <PacienteLayout />,
+        children: [
+          { path: '/marketplace', element: <MarketplacePage /> },
+          { path: '/marketplace/:id', element: <PsicologoPublicProfilePage /> },
+          { path: '/agendamentos', element: <AgendamentosPage /> },
+          { path: '/perfil-paciente', element: <PerfilPacientePage /> },
         ],
       },
     ],

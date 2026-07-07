@@ -38,7 +38,7 @@ Contexto de convenções de código e regras de negócio para desenvolvimento as
 |---|---|---|
 | 0 — Fundação | Cadastro, autenticação, painel de aprovação | ✅ Entregue (`v0.1.0-fundacao`) |
 | 1 — Agenda e Plantão | Slots, Google Calendar, plantão de urgência, perfil do psicólogo | ✅ Entregue (`v0.2.0-agenda`) |
-| 2 — Marketplace | Busca, agendamento, precificação dinâmica | ⏳ Próxima |
+| 2 — Marketplace | Busca, agendamento, precificação dinâmica | ✅ Entregue (`v0.3.0-marketplace`) |
 | 3 a 6 | Prontuário, chatbot, financeiro, administração/QA | 📋 Planejadas |
 
 Veja o changelog detalhado de cada entrega em [`releases/`](releases).
@@ -75,6 +75,11 @@ suba o backend na porta correspondente ao domínio da API e o frontend com
 |---|---|---|---|
 | Admin | `admin@unipsi.local` | `UnipsiAdmin123!` | Acessa `/admin/aprovacoes` para aprovar cadastros de psicólogos |
 | Psicólogo (aprovado) | `psi.sprint1.1783357196@teste.com` | `SenhaForte123` | Criado durante os testes da Sprint 1; acessa `/agenda`, `/plantao`, `/perfil` |
+
+Para testar o marketplace como paciente, cadastre-se em `/cadastro/paciente` (login liberado
+imediatamente). O psicólogo acima já tem ao menos um slot futuro disponível (criado nos testes da
+Sprint 1) e deve aparecer em `/marketplace`; para testar o fluxo de agendamento por completo, crie
+outro slot futuro em `/agenda` logado como esse psicólogo.
 
 Para criar novos usuários de teste:
 - **Psicólogo:** cadastre-se em `/cadastro/psicologo` e aprove o cadastro com a conta ADMIN em `/admin/aprovacoes`

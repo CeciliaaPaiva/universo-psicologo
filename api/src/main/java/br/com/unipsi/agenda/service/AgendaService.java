@@ -1,12 +1,18 @@
 package br.com.unipsi.agenda.service;
 
+import br.com.unipsi.agenda.domain.Sessao;
 import br.com.unipsi.agenda.domain.Slot;
 import br.com.unipsi.agenda.domain.SlotIndisponivelException;
+import br.com.unipsi.agenda.domain.StatusSessao;
 import br.com.unipsi.agenda.dto.CriarSlotRequest;
 import br.com.unipsi.agenda.dto.SlotResponse;
+import br.com.unipsi.agenda.repository.SessaoRepository;
 import br.com.unipsi.agenda.repository.SlotRepository;
+import br.com.unipsi.notificacao.service.EmailService;
+import br.com.unipsi.usuario.domain.Paciente;
 import br.com.unipsi.usuario.domain.Psicologo;
 import br.com.unipsi.usuario.repository.PsicologoRepository;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +31,8 @@ public class AgendaService {
     private final SlotRepository slotRepository;
     private final PsicologoRepository psicologoRepository;
     private final GoogleCalendarService googleCalendarService;
+    private final SessaoRepository sessaoRepository;
+    private final EmailService emailService;
 
     @Transactional
     public List<SlotResponse> criarSlots(UUID psicologoId, List<CriarSlotRequest> pedidos) {
@@ -76,12 +84,30 @@ public class AgendaService {
         }
 
         googleCalendarService.removerEvento(slot.getPsicologo(), slot.getGoogleEventId());
-        slotRepository.delete(slot);
         if (motivo != null && !motivo.isBlank()) {
             log.info("Slot {} cancelado pelo psicólogo {}. Motivo: {}", slotId, psicologoId, motivo);
         }
-        // Notificação ao paciente por e-mail (critério de aceite de US-008) depende do vínculo
-        // slot-sessão-paciente, que só existe a partir do marketplace (Sprint 2).
+
+        sessaoRepository.findBySlotIdAndStatus(slotId, StatusSessao.AGENDADA).ifPresentOrElse(
+                sessao -> cancelarSessaoVinculada(sessao, motivo),
+                () -> slotRepository.delete(slot));
+    }
+
+    private void cancelarSessaoVinculada(Sessao sessao, String motivo) {
+        sessao.setStatus(StatusSessao.CANCELADA);
+        sessao.setCanceladoEm(Instant.now());
+        sessaoRepository.save(sessao);
+
+        Paciente paciente = sessao.getPaciente();
+        Psicologo psicologo = sessao.getPsicologo();
+        emailService.enviarCancelamentoSessao(
+                paciente.getUsuario().getEmail(),
+                paciente.getUsuario().getNome(),
+                psicologo.getUsuario().getNome(),
+                sessao.getSlot().getInicio(),
+                motivo);
+        // O slot em si não é removido quando há uma sessão vinculada (FK sessao.slot_id):
+        // permanece indisponível como registro histórico da sessão cancelada.
     }
 
     private Psicologo buscarPsicologo(UUID psicologoId) {
