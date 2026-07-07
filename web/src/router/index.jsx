@@ -15,11 +15,13 @@ import { PsicologoPublicProfilePage } from '@/pages/PsicologoPublicProfilePage'
 import { AgendamentosPage } from '@/pages/AgendamentosPage'
 import { PerfilPacientePage } from '@/pages/PerfilPacientePage'
 import { PacienteLayout } from '@/layouts/PacienteLayout'
+import { ChatbotPage } from '@/pages/ChatbotPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/cadastro/paciente', element: <RegisterPacientePage /> },
   { path: '/cadastro/psicologo', element: <RegisterPsicologoPage /> },
+  { path: '/chatbot', element: <ChatbotPage /> },
   {
     element: <PrivateRoute role="ADMIN" />,
     children: [{ path: '/admin/aprovacoes', element: <AprovacoesPage /> }],

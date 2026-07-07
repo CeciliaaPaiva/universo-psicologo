@@ -85,7 +85,9 @@ export function RegisterPacientePage() {
               <Label htmlFor="faixaRenda">Faixa de renda per capita familiar</Label>
               <Select onValueChange={(value) => setValue('faixaRenda', value, { shouldValidate: true })}>
                 <SelectTrigger id="faixaRenda" className="w-full">
-                  <SelectValue placeholder="Selecione sua faixa de renda" />
+                  <SelectValue placeholder="Selecione sua faixa de renda">
+                    {(value) => FAIXAS.find((faixa) => faixa.value === value)?.label}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {FAIXAS.map((faixa) => (

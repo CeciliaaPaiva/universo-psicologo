@@ -6,6 +6,7 @@ import br.com.unipsi.plantao.dto.CriarDisponibilidadeRequest;
 import br.com.unipsi.plantao.dto.DisponibilidadeResponse;
 import br.com.unipsi.plantao.dto.StatusPlantaoResponse;
 import br.com.unipsi.plantao.repository.DisponibilidadePlantaoRepository;
+import br.com.unipsi.usuario.domain.Psicologo;
 import br.com.unipsi.usuario.repository.PsicologoRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -45,10 +46,7 @@ public class PlantaoService {
         List<DisponibilidadePlantao> disponibilidades =
                 disponibilidadePlantaoRepository.findByPsicologoIdOrderByCriadoEmDesc(psicologoId);
 
-        LocalDate hoje = LocalDate.now();
-        DiaSemana diaSemanaHoje = DiaSemana.from(hoje.getDayOfWeek());
-        boolean ativoHoje = disponibilidades.stream()
-                .anyMatch(d -> d.isAtivo() && (d.getDiaSemana() == diaSemanaHoje || hoje.equals(d.getDataEspecifica())));
+        boolean ativoHoje = disponibilidades.stream().anyMatch(this::estaAtivoHoje);
 
         return new StatusPlantaoResponse(
                 ativoHoje, disponibilidades.stream().map(DisponibilidadeResponse::from).toList());
@@ -63,5 +61,25 @@ public class PlantaoService {
         }
         disponibilidade.setAtivo(ativo);
         disponibilidadePlantaoRepository.save(disponibilidade);
+    }
+
+    /**
+     * Usado pelo chatbot ao identificar uma situação de crise: busca todos os psicólogos com
+     * disponibilidade de plantão ativa cobrindo o dia de hoje (dia da semana ou data específica).
+     */
+    @Transactional(readOnly = true)
+    public List<Psicologo> buscarPsicologosDePlantaoHoje() {
+        return disponibilidadePlantaoRepository.findByAtivoTrue().stream()
+                .filter(this::estaAtivoHoje)
+                .map(DisponibilidadePlantao::getPsicologo)
+                .distinct()
+                .toList();
+    }
+
+    private boolean estaAtivoHoje(DisponibilidadePlantao disponibilidade) {
+        LocalDate hoje = LocalDate.now();
+        DiaSemana diaSemanaHoje = DiaSemana.from(hoje.getDayOfWeek());
+        return disponibilidade.isAtivo()
+                && (disponibilidade.getDiaSemana() == diaSemanaHoje || hoje.equals(disponibilidade.getDataEspecifica()));
     }
 }

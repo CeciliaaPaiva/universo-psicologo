@@ -1,6 +1,7 @@
 package br.com.unipsi.config;
 
 import br.com.unipsi.auth.service.JwtAuthFilter;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +42,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/agenda/google/callback").permitAll()
+                        .requestMatchers("/api/chatbot/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -49,7 +52,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(frontendOrigin));
+        // unipsi.frontend-origin aceita uma lista separada por vírgula — útil em dev, onde o
+        // front pode ser acessado tanto direto (http://localhost:5173) quanto via Caddy
+        // (*.claudinha.local). Em produção, normalmente uma única origem.
+        config.setAllowedOrigins(Arrays.stream(frontendOrigin.split(",")).map(String::trim).toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

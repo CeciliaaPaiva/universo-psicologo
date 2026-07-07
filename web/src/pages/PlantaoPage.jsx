@@ -70,7 +70,7 @@ export function PlantaoPage() {
         <CardContent className="flex items-end gap-3">
           <Select value={diaSemana} onValueChange={setDiaSemana}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione o dia da semana" />
+              <SelectValue placeholder="Selecione o dia da semana">{(valor) => LABEL_DIA[valor]}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {DIAS_SEMANA.map((dia) => (

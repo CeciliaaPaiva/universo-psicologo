@@ -72,6 +72,13 @@ export function LoginPage() {
                 como psicólogo
               </Link>
             </p>
+            <p className="text-center text-sm text-muted-foreground">
+              Precisa conversar agora?{' '}
+              <Link to="/chatbot" className="text-primary underline-offset-4 hover:underline">
+                Acesse nosso assistente de apoio
+              </Link>{' '}
+              — sem cadastro
+            </p>
           </form>
         </CardContent>
       </Card>

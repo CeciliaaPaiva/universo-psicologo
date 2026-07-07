@@ -132,4 +132,41 @@ class PlantaoServiceTest {
 
         assertThat(disponibilidade.isAtivo()).isFalse();
     }
+
+    @Test
+    void buscarPsicologosDePlantaoHoje_deveRetornarApenasAtivosCobrindoHoje() {
+        DiaSemana hoje = DiaSemana.from(LocalDate.now().getDayOfWeek());
+        DiaSemana diaDiferente = hoje == DiaSemana.DOM ? DiaSemana.SEG : DiaSemana.DOM;
+
+        Psicologo psicologoAtivoHoje = Psicologo.builder().id(UUID.randomUUID()).build();
+        Psicologo psicologoOutroDia = Psicologo.builder().id(UUID.randomUUID()).build();
+
+        DisponibilidadePlantao disponivelHoje = DisponibilidadePlantao.builder()
+                .id(UUID.randomUUID())
+                .psicologo(psicologoAtivoHoje)
+                .diaSemana(hoje)
+                .ativo(true)
+                .build();
+        DisponibilidadePlantao disponivelOutroDia = DisponibilidadePlantao.builder()
+                .id(UUID.randomUUID())
+                .psicologo(psicologoOutroDia)
+                .diaSemana(diaDiferente)
+                .ativo(true)
+                .build();
+        when(disponibilidadePlantaoRepository.findByAtivoTrue())
+                .thenReturn(List.of(disponivelHoje, disponivelOutroDia));
+
+        List<Psicologo> psicologos = plantaoService.buscarPsicologosDePlantaoHoje();
+
+        assertThat(psicologos).containsExactly(psicologoAtivoHoje);
+    }
+
+    @Test
+    void buscarPsicologosDePlantaoHoje_semNenhumAtivoHoje_deveRetornarListaVazia() {
+        when(disponibilidadePlantaoRepository.findByAtivoTrue()).thenReturn(List.of());
+
+        List<Psicologo> psicologos = plantaoService.buscarPsicologosDePlantaoHoje();
+
+        assertThat(psicologos).isEmpty();
+    }
 }

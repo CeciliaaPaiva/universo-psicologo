@@ -70,7 +70,7 @@ export function MarketplacePage() {
                   Avulsa: {formatarMoeda(psicologo.valorAvulsa)} · Pacote:{' '}
                   {formatarMoeda(psicologo.valorPacotePorSessao)}/sessão
                 </span>
-                <Button size="sm" render={<Link to={`/marketplace/${psicologo.id}`} />}>
+                <Button size="sm" nativeButton={false} render={<Link to={`/marketplace/${psicologo.id}`} />}>
                   Ver perfil
                 </Button>
               </div>

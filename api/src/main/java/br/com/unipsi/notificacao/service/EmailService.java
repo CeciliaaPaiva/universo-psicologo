@@ -77,6 +77,19 @@ public class EmailService {
                 (motivo != null && !motivo.isBlank()) ? "<p><strong>Motivo:</strong> %s</p>".formatted(motivo) : ""));
     }
 
+    public void enviarAlertaPlantao(String email, String nomePsicologo, String contatoInformado) {
+        resendClient.enviar(email, "🔴 Plantão acionado — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>O chatbot de triagem identificou uma situação de crise e você está de plantão hoje.</p>
+                <p><strong>Horário do acionamento:</strong> %s</p>
+                <p><strong>Contato informado pelo visitante:</strong> %s</p>
+                <p>Entre em contato o quanto antes, se possível.</p>
+                """.formatted(
+                nomePsicologo,
+                LocalDateTime.now().format(FORMATO_DATA_HORA),
+                (contatoInformado != null && !contatoInformado.isBlank()) ? contatoInformado : "não informado"));
+    }
+
     private String linkVideochamadaHtml(String linkVideochamada) {
         return (linkVideochamada != null && !linkVideochamada.isBlank())
                 ? "<p>Link da videochamada: <a href=\"%s\">%s</a></p>".formatted(linkVideochamada, linkVideochamada)

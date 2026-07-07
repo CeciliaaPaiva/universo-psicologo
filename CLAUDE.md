@@ -55,6 +55,24 @@ Todos os documentos ficam em `/home/cecilia_paiva/universo-psicologo/`. Leia-os 
 - **MinIO** — API S3 em `http://s3.localhost:8000`, creds `minioadmin/minioadmin`
 - **Caddy** — proxy reverso na porta 8000; adicionar `caddy/conf.d/unipsi.caddy` para expor o app
 
+### Acesso ao ambiente de dev — sempre via domínio, nunca `localhost` direto
+
+O Caddy do host já expõe o projeto em `http://unipsi-web.claudinha.local` (frontend) e
+`http://unipsi-api.claudinha.local` (backend), provisionados via skill `dev-env`. **Sempre testar
+e demonstrar por esses domínios**, não por `localhost:8100`/`localhost:8101` — é o que
+`FRONTEND_ORIGIN`, `GOOGLE_REDIRECT_URI` e o restante do projeto assumem como ambiente real.
+
+- Backend: `cd api && ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8101`
+- Frontend: **precisa de `--host 0.0.0.0`** — o Vite por padrão só escuta em `::1` (IPv6), e o
+  `reverse_proxy` do Caddy aponta para `127.0.0.1` (IPv4); sem isso o Caddy responde 502 mesmo com
+  o Vite rodando normalmente.
+  ```bash
+  cd web && VITE_API_PROXY_TARGET=http://localhost:8101 npm run dev -- --port 8100 --host 0.0.0.0
+  ```
+- `unipsi.frontend-origin` (env `FRONTEND_ORIGIN`) aceita lista separada por vírgula — mantenha
+  `http://unipsi-web.claudinha.local` nela sempre; outras origens (ex.: `localhost`) podem ser
+  adicionadas para depuração pontual, mas não removam a do Caddy.
+
 ### Serviços externos
 - **Google Gemini API** (`gemini-1.5-flash`) — chatbot de triagem; tier gratuito: 1.500 req/dia
 - **Resend API** — envio de e-mails; tier gratuito: 100 e-mails/dia

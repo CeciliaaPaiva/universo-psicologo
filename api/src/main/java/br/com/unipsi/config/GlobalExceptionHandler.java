@@ -4,6 +4,7 @@ import br.com.unipsi.agenda.domain.SlotIndisponivelException;
 import br.com.unipsi.auth.domain.CadastroNaoAprovadoException;
 import br.com.unipsi.auth.domain.CredenciaisInvalidasException;
 import br.com.unipsi.auth.domain.RefreshTokenInvalidoException;
+import br.com.unipsi.chatbot.domain.RateLimitExcedidoException;
 import br.com.unipsi.prontuario.domain.AcessoProntuarioNegadoException;
 import br.com.unipsi.prontuario.domain.CodinomeJaCadastradoException;
 import br.com.unipsi.usuario.domain.EmailJaCadastradoException;
@@ -58,6 +59,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AcessoProntuarioNegadoException.class)
     public ResponseEntity<Map<String, String>> handle(AcessoProntuarioNegadoException e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("mensagem", e.getMessage()));
+    }
+
+    @ExceptionHandler(RateLimitExcedidoException.class)
+    public ResponseEntity<Map<String, String>> handle(RateLimitExcedidoException e) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("mensagem", e.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

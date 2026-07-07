@@ -41,7 +41,8 @@ Contexto de convenções de código e regras de negócio para desenvolvimento as
 | 1 — Agenda e Plantão | Slots, Google Calendar, plantão de urgência, perfil do psicólogo | ✅ Entregue (`v0.2.0-agenda`) |
 | 2 — Marketplace | Busca, agendamento, precificação dinâmica | ✅ Entregue (`v0.3.0-marketplace`) |
 | 3 — Prontuário | Anotações criptografadas, codinome, auditoria de acesso | ✅ Entregue (`v0.4.0-prontuario`) |
-| 4 a 6 | Chatbot, financeiro, administração/QA | 📋 Planejadas |
+| 4 — Chatbot | Triagem via IA generativa, detecção de crise, plantão de urgência | ✅ Entregue (`v0.5.0-chatbot`) |
+| 5 e 6 | Financeiro, administração/QA | 📋 Planejadas |
 
 Veja o changelog detalhado de cada entrega em [`releases/`](releases).
 
@@ -51,21 +52,28 @@ Pré-requisitos: Java 21, Node 20+, e uma stack de PostgreSQL/Redis/MinIO acess�
 Docker). As variáveis de ambiente ficam em `api/.env` (veja `api/.env.example` como referência —
 nunca commitar o `.env` real).
 
-```bash
-# Backend (porta padrão 8080)
-cd api
-./mvnw spring-boot:run
+**Acesse sempre pelos domínios do Caddy — `http://unipsi-web.claudinha.local` (frontend) e
+`http://unipsi-api.claudinha.local` (backend) — nunca por `localhost` direto.** É o que
+`FRONTEND_ORIGIN` e `GOOGLE_REDIRECT_URI` em `api/.env` assumem como origem real; acessar via
+`localhost` pode disparar erro de CORS dependendo do que estiver configurado ali.
 
-# Frontend (porta padrão 5173, proxy de /api para localhost:8080)
+```bash
+# Backend — porta 8101, casando com o domínio unipsi-api.claudinha.local já provisionado
+cd api
+./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8101
+
+# Frontend — porta 8100, casando com unipsi-web.claudinha.local
+# --host 0.0.0.0 é obrigatório: o Vite por padrão só escuta em ::1 (IPv6), e o
+# reverse_proxy do Caddy aponta para 127.0.0.1 (IPv4) — sem isso o Caddy responde 502
+# mesmo com o Vite rodando normalmente.
 cd web
 npm install
-npm run dev
+VITE_API_PROXY_TARGET=http://localhost:8101 npm run dev -- --port 8100 --host 0.0.0.0
 ```
 
-Se você estiver usando o ambiente de dev provisionado via Caddy (domínios `*.claudinha.local`),
-suba o backend na porta correspondente ao domínio da API e o frontend com
-`VITE_API_PROXY_TARGET` apontando para essa porta — veja "Pontos de atenção" em
-[`releases/v0.2.0-agenda.md`](releases/v0.2.0-agenda.md).
+Sem o ambiente Caddy provisionado (ex.: fora deste projeto), backend e frontend caem nas portas
+padrão do Spring Boot/Vite (8080/5173) e falam entre si via `VITE_API_PROXY_TARGET` — mas isso é
+o caso excepcional, não o fluxo padrão de desenvolvimento aqui.
 
 ## Credenciais de teste (ambiente local)
 
@@ -86,3 +94,7 @@ outro slot futuro em `/agenda` logado como esse psicólogo.
 Para criar novos usuários de teste:
 - **Psicólogo:** cadastre-se em `/cadastro/psicologo` e aprove o cadastro com a conta ADMIN em `/admin/aprovacoes`
 - **Paciente:** cadastre-se em `/cadastro/paciente` (login liberado imediatamente, sem aprovação)
+
+O chatbot de triagem (`/chatbot`) é público — não exige login nem cadastro. Sem `GEMINI_API_KEY`
+configurada, ele responde com um fallback local (ver `releases/v0.5.0-chatbot.md`), que ainda assim
+detecta crise e aciona o plantão normalmente.
