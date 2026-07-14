@@ -9,6 +9,7 @@ import br.com.unipsi.agenda.dto.SlotResponse;
 import br.com.unipsi.agenda.repository.SessaoRepository;
 import br.com.unipsi.agenda.repository.SlotRepository;
 import br.com.unipsi.notificacao.service.EmailService;
+import br.com.unipsi.notificacao.service.NotificacaoService;
 import br.com.unipsi.usuario.domain.Paciente;
 import br.com.unipsi.usuario.domain.Psicologo;
 import br.com.unipsi.usuario.domain.StatusAprovacao;
@@ -35,6 +36,7 @@ public class AgendaService {
     private final GoogleCalendarService googleCalendarService;
     private final SessaoRepository sessaoRepository;
     private final EmailService emailService;
+    private final NotificacaoService notificacaoService;
 
     @Transactional
     public List<SlotResponse> criarSlots(UUID psicologoId, List<CriarSlotRequest> pedidos) {
@@ -108,6 +110,10 @@ public class AgendaService {
                 psicologo.getUsuario().getNome(),
                 sessao.getSlot().getInicio(),
                 motivo);
+        notificacaoService.criar(paciente.getId(),
+                "Sua sessão com %s em %s foi cancelada".formatted(
+                        psicologo.getUsuario().getNome(),
+                        sessao.getSlot().getInicio().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM 'às' HH:mm"))));
         // O slot em si não é removido quando há uma sessão vinculada (FK sessao.slot_id):
         // permanece indisponível como registro histórico da sessão cancelada.
     }

@@ -129,7 +129,9 @@ Essencial para decisões de priorização, ordem de desenvolvimento e cortes de 
 - Nunca emite diagnóstico clínico. O system prompt deve impor essa restrição explicitamente.
 - Em situações de crise, primeiro oferece técnicas de suporte imediato (respiração, ancoragem sensorial), depois aciona o plantão.
 - Se nenhum psicólogo estiver de plantão ativo no dia, informa o paciente e exibe contatos de emergência: **CVV** — chat em [https://cvv.org.br/chat/](https://cvv.org.br/chat/) e ligação via `tel:188` — e **SAMU** (192). *(Ajuste da reunião de 07/07/2026 — ver `atas/2026-07-07-alinhamento-sprint-4.md`; antes só exibia os números.)*
-- **Busca ampliada de profissional (ajuste 07/07/2026):** quando o paciente deixa um contato de retorno em situação de crise (por exemplo, se a IA/sistema estiver indisponível), o sistema deve procurar tanto psicólogos **de plantão no dia** quanto psicólogos **com a próxima disponibilidade mais próxima na agenda**, e retornar esse contato ao paciente — não fica restrito a quem está de plantão hoje. Ainda não implementado; hoje só busca plantão (ver `ChatbotService`/`PlantaoService.buscarPsicologosDePlantaoHoje`).
+- **Busca ampliada de profissional (ajuste 07/07/2026, implementado em v0.5.1):** quando o paciente deixa um contato de retorno em situação de crise, o sistema procura tanto psicólogos **de plantão no dia** (`PlantaoService.buscarPsicologosDePlantaoHoje`) quanto, se ninguém estiver de plantão, o psicólogo aprovado com a **próxima disponibilidade mais próxima na agenda** (`AgendaService.buscarPsicologoComProximaDisponibilidade`). CVV/SAMU só aparecem se nenhum dos dois encontrar alguém.
+- **Contato obrigatório no chatbot (ajuste 14/07/2026, implementado em v0.6.0):** o campo de contato deixou de ser opcional — o input de mensagem fica bloqueado no frontend até o paciente preencher telefone ou e-mail, e o backend valida com `@NotBlank` em `ChatMessageRequest.contato`. Motivo: sem contato, o psicólogo acionado numa crise não tem como retornar ao paciente.
+- **Retry ao Gemini (v0.6.0):** `GeminiClient` tenta até 3 vezes (backoff 500ms/1000ms) antes de cair no texto fixo de fallback — reduz a frequência de respostas idênticas quando a Gemini API (tier gratuito) retorna `503` por sobrecarga. A repetição ainda pode ocorrer ocasionalmente (ver DT-22 em `docs/Debitos-UniPsi.md`).
 
 ### Terapia social e precificação
 - A plataforma atende **exclusivamente** pacientes de baixa renda (até Classe D). Pacientes acima desse limite são inelegíveis.
@@ -156,12 +158,12 @@ Essencial para decisões de priorização, ordem de desenvolvimento e cortes de 
 - Cálculo centralizado em `PrecificacaoService`. Para renda fora do escopo, lançar `PacienteNaoElegivelException`.
 - Taxa da plataforma: **20% por sessão** sobre o valor pago pelo paciente (avulsa ou per-sessão no pacote). Variável de ambiente: `TAXA_PLATAFORMA_PERCENTUAL=20`.
 - Pacote: a cobrança mensal é gerada no ato do agendamento e cobre as 4 sessões do mês.
-- **Exibição do pacote mensal (ajuste 07/07/2026 — ainda não implementado):** em `/agendamentos`, mostrar o **valor da sessão avulsa** + o **valor total do pacote**, destacando quanto o paciente economiza no pacote — não só "valor por sessão", que estava confuso.
-- **Terapia de casal (ajuste 07/07/2026):** custa o **dobro** do valor da sessão individual/convencional na mesma faixa e modalidade (ex.: `FAIXA_1` avulsa individual R$ 60,00 → casal R$ 120,00). Ainda não implementado — `PrecificacaoService` hoje só recebe `FaixaRenda` + `Modalidade`, sem noção de tipo de atendimento (individual/casal). Valores exatos a confirmar com Victor (ver ata). Modelar como novo parâmetro/enum `TipoAtendimento` (`INDIVIDUAL`/`CASAL`) em vez de duplicar a tabela de preços.
+- **Exibição do pacote mensal (ajuste 07/07/2026, implementado em v0.5.1):** em `/agendamentos`, `SessaoResponse` mostra `valorSessaoAvulsa` + `valorPacoteTotal` + `economiaPacote`, destacando quanto o paciente economiza no pacote.
+- **Terapia de casal (ajuste 07/07/2026, implementado em v0.5.1):** custa o **dobro** do valor da sessão individual/convencional na mesma faixa e modalidade (ex.: `FAIXA_1` avulsa individual R$ 60,00 → casal R$ 120,00). `PrecificacaoService.calcularValorSessao` recebe `FaixaRenda` + `Modalidade` + `TipoAtendimento` (`INDIVIDUAL`/`CASAL`, enum novo em `agenda.domain`). Valores exatos ainda dependem de confirmação formal do Victor — a regra "dobro" já estava definida na ata e foi o que se implementou.
 
-### Marketplace *(ajuste 07/07/2026 — ainda não implementado)*
-- O campo de busca hoje chamado "Especialidade" (`especializacao` do psicólogo, usado tanto na busca quanto no card) precisa virar dois conceitos distintos: **especialização** continua sendo a formação/abordagem do psicólogo (ex.: "TCC e Esquemas"), exibida no card; o campo de busca passa a ser sobre **temas/situações atendidas** (ansiedade, luto, terapia de casal...), pensado como tags abaixo do nome+especialização.
-- **Nome sugerido para o novo campo: "Áreas de atuação"** (alternativas: "Temas atendidos", "Focos de atendimento") — a confirmar com o time antes de implementar. Requer campo novo no domínio (`Psicologo.areasAtuacao`, provavelmente lista/array), distinto de `especializacao`.
+### Marketplace — Áreas de atuação *(ajuste 07/07/2026, implementado em v0.5.1)*
+- O campo de busca "Especialidade" virou dois conceitos distintos: **especialização** (`Psicologo.especializacao`) continua sendo a formação/abordagem do psicólogo, exibida no card; o campo de busca agora é **"Áreas de atuação"** (`Psicologo.areasAtuacao`, `@ElementCollection` de tags — ex.: ansiedade, luto, terapia de casal), exibido como tags abaixo do nome+especialização. `GET /api/marketplace/psicologos` filtra por `areaAtuacao` em vez de `especialidade`.
+- Psicólogos aprovados antes desta mudança ficam com `areasAtuacao` vazio até se atualizarem em `/perfil-psicologo` — não há backfill automático (ver DT-19 em `docs/Debitos-UniPsi.md`).
 
 ### Modalidades de atendimento
 - **Avulsa:** sessão única; paciente agenda e paga por sessão.
@@ -169,11 +171,11 @@ Essencial para decisões de priorização, ordem de desenvolvimento e cortes de 
 - A modalidade é selecionada pelo paciente no momento do agendamento e registrada no campo `modalidade` da entidade `SESSAO` (enum `AVULSA` / `PACOTE_MENSAL`).
 - Pacotes não são reembolsáveis — cancelamento de sessão individual dentro do pacote segue a política de cancelamento.
 
-### Perfil do paciente e anamnese *(ajuste 07/07/2026 — ainda não implementado)*
-- **Faixa de renda deixa de ser editável pelo paciente.** É autodeclarada uma única vez no cadastro (`RegisterPacientePage`); depois disso, só o psicólogo pode reavaliar a situação financeira ao longo do acompanhamento — reaproveitar o fluxo já previsto de "Solicitar Revisão de Perfil Financeiro" (US-017/US-027), em vez de reabrir edição direta pelo paciente. Isso **reverte** a decisão original de US-005 ("paciente edita todos os dados, incluindo faixa de renda"), que já estava implementada (`PUT /api/usuarios/paciente/perfil` aceitava `faixaRenda`) — remover essa capacidade de auto-edição é trabalho pendente.
-- Paciente pode adicionar/editar **foto de perfil**.
-- Cadastro/perfil do paciente passa a ter **idade** (ou data de nascimento, calculando idade).
-- **Anamnese básica, com acesso temporário do psicólogo (refinado 07/07/2026):** já fez terapia antes, motivo de buscar terapia agora, se toma medicação controlada, entre outras perguntas (lista final é tarefa do Victor — ver ata). Existe para o psicólogo chegar preparado na primeira sessão, sem depender só da conversa inicial.
+### Perfil do paciente e anamnese *(ajuste 07/07/2026 — preenchimento implementado em v0.5.1; acesso temporário do psicólogo ainda não implementado, ver DT-16)*
+- **Faixa de renda deixou de ser editável pelo paciente** (implementado). É autodeclarada uma única vez no cadastro (`RegisterPacientePage`); depois disso, só o psicólogo pode reavaliar a situação financeira ao longo do acompanhamento, via "Solicitar Revisão de Perfil Financeiro" (US-017/US-027). `PUT /api/usuarios/paciente/perfil` não aceita mais `faixaRenda`.
+- Paciente pode adicionar/editar **foto de perfil** (implementado, multipart, reaproveita `MinioService`).
+- Cadastro/perfil do paciente tem **idade** (implementado, `Paciente.idade`).
+- **Anamnese básica (implementado em v0.5.1 — só o preenchimento pelo paciente):** já fez terapia antes, motivo de buscar terapia agora, se toma medicação controlada, contato do responsável (condicional a menor de idade). Cifrada com `CriptografiaService` (AES-256-GCM), módulo `usuario.domain.Anamnese`. **O acesso temporário do psicólogo (janela entre pagamento da 1ª sessão e sua realização) ainda não foi implementado** — depende de `Cobranca` (agora existe, desde v0.6.0), corretamente alocado para a Sprint 5.5. Ver DT-16.
   - **A anamnese é sempre do paciente — nunca pública, nunca permanente para o psicólogo.** Diferente do prontuário (acesso permanente ao autor), o acesso do psicólogo à anamnese é **temporário**: só existe na janela entre a **primeira sessão com aquele paciente ser agendada e paga** e essa sessão **ser realizada**. Depois disso, o acesso é revogado — o psicólogo já deve ter registrado o que precisa nas próprias anotações de prontuário.
   - Se o paciente agendar depois com outro psicólogo, esse novo profissional ganha sua própria janela de acesso (primeira sessão *com ele*), independente — não é um acesso permanente nem compartilhado entre profissionais.
   - Segue o mesmo padrão de proteção do prontuário: conteúdo cifrado com `CriptografiaService` (AES-256-GCM) e toda leitura registrada em auditoria (mesmo espírito de `AuditoriaProntuarioService`) — a diferença é o controle de acesso ser por **janela de tempo/status da sessão**, não por autoria fixa.
@@ -193,12 +195,12 @@ Essencial para decisões de priorização, ordem de desenvolvimento e cortes de 
 - Psicólogo com status `PENDENTE_APROVACAO` ou `REPROVADO` não acessa funcionalidades operacionais.
 
 ### Pagamento
-- Simulado no MVP (sem gateway real). `CobrancaService` gerencia os status: `PENDENTE → PAGO → CANCELADO`.
+- Simulado no MVP (sem gateway real). Implementado em v0.6.0 (Sprint 5): `CobrancaService` gerencia os status `PENDENTE → PAGO → CANCELADO`. Cobrança é gerada automaticamente quando o psicólogo marca a sessão como `REALIZADA` (`POST /api/agenda/sessoes/{id}/realizar`), copiando os valores já calculados em `Sessao` (`valorSessao`/`taxaPlataforma`/`valorLiquido`) — não recalcula. `LembreteSessaoScheduler` dispara e-mail + notificação in-app 24h e 1h antes da sessão.
 
 ### Mensagens internas *(nova feature, ajuste 07/07/2026 — ainda não implementada)*
 - Chat interno entre psicólogo e paciente, na própria plataforma.
 - **Liberado somente depois que a sessão está agendada E paga** (`Sessao` com `Cobranca.status = PAGO`) — antes disso não há canal de mensagens entre as partes.
-- Depende do módulo financeiro (Sprint 5, ainda não implementado) para existir `Cobranca`/status de pagamento — não dá para construir antes disso.
+- `Cobranca`/status de pagamento já existe desde v0.6.0 (Sprint 5) — a dependência que bloqueava esta história está resolvida; segue alocada para a Sprint 5.5.
 
 ---
 
@@ -283,5 +285,4 @@ fix(chatbot): corrige detecção de crise em mensagens curtas
 | Gateway de pagamento real | Substitui simulação em `CobrancaService` (pós-MVP) |
 | Domínio de produção | Configuração Caddy e CORS |
 | Valor exato da terapia de casal (tarefa do Victor) | Regra já definida como "dobro do individual" — falta só confirmar se o dobro se aplica igual em todas as faixas/modalidades. Ver `atas/2026-07-07-alinhamento-sprint-4.md` |
-| Perguntas do formulário de anamnese básica (tarefa do Victor) | Define os campos de `Anamnese`/perguntas em `ER-UniPsi.md` antes de implementar o formulário |
-| Nome final do campo de busca do marketplace | Sugestão "Áreas de atuação" proposta nesta sessão — a confirmar com o time |
+| Perguntas do formulário de anamnese básica (tarefa do Victor) | Já implementado um subconjunto inicial (já fez terapia, motivo da busca, medicação controlada); lista final ainda não confirmada — `Anamnese` guarda um blob JSON cifrado, então novas perguntas não exigem migração |

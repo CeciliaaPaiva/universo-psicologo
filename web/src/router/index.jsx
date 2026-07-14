@@ -16,6 +16,9 @@ import { AgendamentosPage } from '@/pages/AgendamentosPage'
 import { PerfilPacientePage } from '@/pages/PerfilPacientePage'
 import { PacienteLayout } from '@/layouts/PacienteLayout'
 import { ChatbotPage } from '@/pages/ChatbotPage'
+import { SessoesPage } from '@/pages/SessoesPage'
+import { FinanceiroPage } from '@/pages/FinanceiroPage'
+import { CobrancasPage } from '@/pages/CobrancasPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -33,6 +36,8 @@ export const router = createBrowserRouter([
         element: <PsicologoLayout />,
         children: [
           { path: '/agenda', element: <AgendaPage /> },
+          { path: '/sessoes', element: <SessoesPage /> },
+          { path: '/financeiro', element: <FinanceiroPage /> },
           { path: '/plantao', element: <PlantaoPage /> },
           { path: '/perfil', element: <PerfilPsicologoPage /> },
           { path: '/prontuario', element: <ProntuarioPage /> },
@@ -51,6 +56,7 @@ export const router = createBrowserRouter([
           { path: '/marketplace', element: <MarketplacePage /> },
           { path: '/marketplace/:id', element: <PsicologoPublicProfilePage /> },
           { path: '/agendamentos', element: <AgendamentosPage /> },
+          { path: '/cobrancas', element: <CobrancasPage /> },
           { path: '/perfil-paciente', element: <PerfilPacientePage /> },
         ],
       },

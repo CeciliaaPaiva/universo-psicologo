@@ -9,7 +9,7 @@ export function ChatbotPage() {
           ← Voltar
         </Link>
         <div className="flex items-center gap-3">
-          <img src="/unipsi-icon.png" alt="Universo Psicólogo" className="h-10 w-10" />
+          <img src="/unipsi-logo.jpg" alt="Universo Psicólogo" className="h-16 w-16 object-contain" />
           <h1 className="text-xl font-medium">Converse com nosso assistente de triagem</h1>
         </div>
         <p className="text-sm text-muted-foreground">

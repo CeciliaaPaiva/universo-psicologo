@@ -1,5 +1,6 @@
 package br.com.unipsi.notificacao.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
@@ -103,6 +104,38 @@ public class EmailService {
                 nomePsicologo,
                 LocalDateTime.now().format(FORMATO_DATA_HORA),
                 (contatoInformado != null && !contatoInformado.isBlank()) ? contatoInformado : "não informado"));
+    }
+
+    public void enviarCobrancaGerada(String email, String nomePaciente, BigDecimal valor) {
+        resendClient.enviar(email, "Cobrança gerada — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>Sua sessão foi realizada e uma cobrança de <strong>R$ %s</strong> foi gerada.</p>
+                <p>Acesse a plataforma para confirmar o pagamento.</p>
+                """.formatted(nomePaciente, valor));
+    }
+
+    public void enviarCobrancaPaga(String email, String nomePsicologo, BigDecimal valorLiquido) {
+        resendClient.enviar(email, "Pagamento confirmado — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>O paciente confirmou o pagamento de uma sessão. Você recebeu <strong>R$ %s</strong>
+                (valor líquido, já descontada a taxa da plataforma).</p>
+                """.formatted(nomePsicologo, valorLiquido));
+    }
+
+    public void enviarCobrancaCancelada(String email, String nomePaciente) {
+        resendClient.enviar(email, "Cobrança cancelada — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>Uma cobrança pendente sua foi cancelada pelo psicólogo. Nenhum pagamento é necessário.</p>
+                """.formatted(nomePaciente));
+    }
+
+    public void enviarLembreteSessao(
+            String email, String nome, String nomeOutraParte, LocalDateTime inicio, String linkVideochamada) {
+        resendClient.enviar(email, "Lembrete de sessão — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>Sua sessão com <strong>%s</strong> está agendada para <strong>%s</strong>.</p>
+                %s
+                """.formatted(nome, nomeOutraParte, inicio.format(FORMATO_DATA_HORA), linkVideochamadaHtml(linkVideochamada)));
     }
 
     private String linkVideochamadaHtml(String linkVideochamada) {

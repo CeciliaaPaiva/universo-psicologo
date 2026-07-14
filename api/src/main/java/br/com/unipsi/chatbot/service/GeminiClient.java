@@ -53,17 +53,34 @@ public class GeminiClient {
         return apiKey != null && !apiKey.isBlank();
     }
 
+    private static final int MAX_TENTATIVAS = 3;
+    private static final long ATRASO_BASE_MS = 500;
+
     public String gerarResposta(List<ChatMessage> historico) {
         if (configurado()) {
-            try {
-                return chamarApi(historico);
-            } catch (Exception e) {
-                log.warn("Falha ao chamar a API do Gemini: {}", e.getMessage());
+            for (int tentativa = 1; tentativa <= MAX_TENTATIVAS; tentativa++) {
+                try {
+                    return chamarApi(historico);
+                } catch (Exception e) {
+                    log.warn("Falha ao chamar a API do Gemini (tentativa {}/{}): {}",
+                            tentativa, MAX_TENTATIVAS, e.getMessage());
+                    if (tentativa < MAX_TENTATIVAS) {
+                        aguardarComBackoff(tentativa);
+                    }
+                }
             }
         } else {
             log.debug("GEMINI_API_KEY não configurada — usando resposta de fallback local");
         }
         return gerarFallback(historico);
+    }
+
+    private void aguardarComBackoff(int tentativa) {
+        try {
+            Thread.sleep(ATRASO_BASE_MS * tentativa);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     @SuppressWarnings("unchecked")

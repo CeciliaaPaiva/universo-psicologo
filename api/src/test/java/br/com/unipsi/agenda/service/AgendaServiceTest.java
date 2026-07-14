@@ -15,6 +15,7 @@ import br.com.unipsi.agenda.dto.SlotResponse;
 import br.com.unipsi.agenda.repository.SessaoRepository;
 import br.com.unipsi.agenda.repository.SlotRepository;
 import br.com.unipsi.notificacao.service.EmailService;
+import br.com.unipsi.notificacao.service.NotificacaoService;
 import br.com.unipsi.usuario.domain.Psicologo;
 import br.com.unipsi.usuario.repository.PsicologoRepository;
 import java.time.LocalDateTime;
@@ -45,6 +46,9 @@ class AgendaServiceTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private NotificacaoService notificacaoService;
 
     @InjectMocks
     private AgendaService agendaService;

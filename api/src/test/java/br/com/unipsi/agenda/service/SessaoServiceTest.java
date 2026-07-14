@@ -15,7 +15,9 @@ import br.com.unipsi.agenda.dto.AgendarSessaoRequest;
 import br.com.unipsi.agenda.dto.SessaoResponse;
 import br.com.unipsi.agenda.repository.SessaoRepository;
 import br.com.unipsi.agenda.repository.SlotRepository;
+import br.com.unipsi.financeiro.service.CobrancaService;
 import br.com.unipsi.marketplace.service.PrecificacaoService;
+import br.com.unipsi.notificacao.service.NotificacaoService;
 import br.com.unipsi.notificacao.service.EmailService;
 import br.com.unipsi.usuario.domain.FaixaRenda;
 import br.com.unipsi.usuario.domain.Paciente;
@@ -51,6 +53,12 @@ class SessaoServiceTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private CobrancaService cobrancaService;
+
+    @Mock
+    private NotificacaoService notificacaoService;
 
     @InjectMocks
     private SessaoService sessaoService;
@@ -180,5 +188,64 @@ class SessaoServiceTest {
 
         assertThat(respostas).hasSize(1);
         assertThat(respostas.get(0).nomePsicologo()).isEqualTo("Psicólogo Teste");
+    }
+
+    @Test
+    void marcarRealizada_sessaoAgendadaDoPsicologo_deveMudarStatusEGerarCobranca() {
+        UUID sessaoId = UUID.randomUUID();
+        Sessao sessao = Sessao.builder()
+                .id(sessaoId)
+                .slot(slot)
+                .paciente(paciente)
+                .psicologo(psicologo)
+                .modalidade(Modalidade.AVULSA)
+                .tipoAtendimento(TipoAtendimento.INDIVIDUAL)
+                .valorSessao(new BigDecimal("60.00"))
+                .status(StatusSessao.AGENDADA)
+                .build();
+        when(sessaoRepository.findById(sessaoId)).thenReturn(Optional.of(sessao));
+        when(precificacaoService.calcularValorSessao(FaixaRenda.FAIXA_1, Modalidade.AVULSA, TipoAtendimento.INDIVIDUAL))
+                .thenReturn(new BigDecimal("60.00"));
+        when(precificacaoService.calcularValorPacoteTotal(FaixaRenda.FAIXA_1, TipoAtendimento.INDIVIDUAL))
+                .thenReturn(new BigDecimal("228.00"));
+        when(precificacaoService.calcularEconomiaPacote(FaixaRenda.FAIXA_1, TipoAtendimento.INDIVIDUAL))
+                .thenReturn(new BigDecimal("12.00"));
+
+        SessaoResponse resposta = sessaoService.marcarRealizada(psicologo.getId(), sessaoId);
+
+        assertThat(resposta.status()).isEqualTo(StatusSessao.REALIZADA);
+        org.mockito.Mockito.verify(cobrancaService).gerar(sessao);
+    }
+
+    @Test
+    void marcarRealizada_sessaoDeOutroPsicologo_deveLancarExcecao() {
+        UUID sessaoId = UUID.randomUUID();
+        Sessao sessao = Sessao.builder()
+                .id(sessaoId)
+                .slot(slot)
+                .paciente(paciente)
+                .psicologo(psicologo)
+                .status(StatusSessao.AGENDADA)
+                .build();
+        when(sessaoRepository.findById(sessaoId)).thenReturn(Optional.of(sessao));
+
+        assertThatThrownBy(() -> sessaoService.marcarRealizada(UUID.randomUUID(), sessaoId))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void marcarRealizada_sessaoJaRealizada_deveLancarExcecao() {
+        UUID sessaoId = UUID.randomUUID();
+        Sessao sessao = Sessao.builder()
+                .id(sessaoId)
+                .slot(slot)
+                .paciente(paciente)
+                .psicologo(psicologo)
+                .status(StatusSessao.REALIZADA)
+                .build();
+        when(sessaoRepository.findById(sessaoId)).thenReturn(Optional.of(sessao));
+
+        assertThatThrownBy(() -> sessaoService.marcarRealizada(psicologo.getId(), sessaoId))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

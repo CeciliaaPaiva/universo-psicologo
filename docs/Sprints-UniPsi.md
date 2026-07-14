@@ -440,6 +440,11 @@ das duas ("libera depois do pagamento" / "acesso até a sessão ser realizada") 
 
 ## Sprint 5 — Financeiro e Notificações
 
+**Status:** ✅ Entregue em 14/07/2026 — ver `releases/v0.6.0-financeiro.md`. Além do escopo abaixo, a
+release também inclui notificação in-app (pedido do stakeholder na demo), correção de um bug crítico
+de fuso horário (agendamento inteiro ficava ~3h "no passado") e ajustes de robustez/UX no chatbot
+(contato obrigatório, retry ao Gemini).
+
 **Período:** Semanas 11–12  
 **Objetivo:** Ciclo financeiro completo (simulado) — cobrança gerada após sessão, pagamento confirmado pelo paciente e relatório disponível para o psicólogo. Lembretes automáticos por e-mail funcionando.  
 **Pontos:** 16  

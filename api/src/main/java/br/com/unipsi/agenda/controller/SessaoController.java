@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,7 +37,23 @@ public class SessaoController {
         return sessaoService.listar(pacienteId(auth));
     }
 
+    @GetMapping("/psicologo")
+    @PreAuthorize("hasRole('PSICOLOGO')")
+    public List<SessaoResponse> listarDoPsicologo(Authentication auth) {
+        return sessaoService.listarPorPsicologo(psicologoId(auth));
+    }
+
+    @PostMapping("/{id}/realizar")
+    @PreAuthorize("hasRole('PSICOLOGO')")
+    public SessaoResponse marcarRealizada(Authentication auth, @PathVariable UUID id) {
+        return sessaoService.marcarRealizada(psicologoId(auth), id);
+    }
+
     private UUID pacienteId(Authentication auth) {
+        return UUID.fromString(auth.getName());
+    }
+
+    private UUID psicologoId(Authentication auth) {
         return UUID.fromString(auth.getName());
     }
 }

@@ -9,13 +9,16 @@ import br.com.unipsi.agenda.dto.AgendarSessaoRequest;
 import br.com.unipsi.agenda.dto.SessaoResponse;
 import br.com.unipsi.agenda.repository.SessaoRepository;
 import br.com.unipsi.agenda.repository.SlotRepository;
+import br.com.unipsi.financeiro.service.CobrancaService;
 import br.com.unipsi.marketplace.service.PrecificacaoService;
 import br.com.unipsi.notificacao.service.EmailService;
+import br.com.unipsi.notificacao.service.NotificacaoService;
 import br.com.unipsi.usuario.domain.Paciente;
 import br.com.unipsi.usuario.domain.Psicologo;
 import br.com.unipsi.usuario.repository.PacienteRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +29,15 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SessaoService {
 
+    private static final DateTimeFormatter FORMATO_DATA_HORA = DateTimeFormatter.ofPattern("dd/MM 'às' HH:mm");
+
     private final SlotRepository slotRepository;
     private final SessaoRepository sessaoRepository;
     private final PacienteRepository pacienteRepository;
     private final PrecificacaoService precificacaoService;
     private final EmailService emailService;
+    private final CobrancaService cobrancaService;
+    private final NotificacaoService notificacaoService;
 
     @Transactional
     public SessaoResponse agendar(UUID pacienteId, AgendarSessaoRequest pedido) {
@@ -76,6 +83,31 @@ public class SessaoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<SessaoResponse> listarPorPsicologo(UUID psicologoId) {
+        return sessaoRepository.findByPsicologoIdOrderByCriadaEmDesc(psicologoId).stream()
+                .map(this::paraResposta)
+                .toList();
+    }
+
+    @Transactional
+    public SessaoResponse marcarRealizada(UUID psicologoId, UUID sessaoId) {
+        Sessao sessao = sessaoRepository.findById(sessaoId)
+                .orElseThrow(() -> new IllegalArgumentException("Sessão não encontrada"));
+        if (!sessao.getPsicologo().getId().equals(psicologoId)) {
+            throw new IllegalArgumentException("Sessão não encontrada");
+        }
+        if (sessao.getStatus() != StatusSessao.AGENDADA) {
+            throw new IllegalArgumentException("Apenas sessões agendadas podem ser marcadas como realizadas");
+        }
+
+        sessao.setStatus(StatusSessao.REALIZADA);
+        sessaoRepository.save(sessao);
+        cobrancaService.gerar(sessao);
+
+        return paraResposta(sessao);
+    }
+
     private SessaoResponse paraResposta(Sessao sessao) {
         var faixaRenda = sessao.getPaciente().getFaixaRenda();
         var tipoAtendimento = sessao.getTipoAtendimento();
@@ -104,5 +136,12 @@ public class SessaoService {
                 paciente.getUsuario().getNome(),
                 inicio,
                 psicologo.getLinkVideochamada());
+
+        notificacaoService.criar(paciente.getId(),
+                "Sua sessão com %s foi agendada para %s".formatted(
+                        psicologo.getUsuario().getNome(), inicio.format(FORMATO_DATA_HORA)));
+        notificacaoService.criar(psicologo.getId(),
+                "Nova sessão agendada com %s para %s".formatted(
+                        paciente.getUsuario().getNome(), inicio.format(FORMATO_DATA_HORA)));
     }
 }

@@ -25,7 +25,7 @@ export function ChatWindow() {
   const [ultimaResposta, setUltimaResposta] = useState(null)
 
   const enviarMutation = useMutation({
-    mutationFn: (mensagem) => enviarMensagem({ sessionId, mensagem, contato: contato || undefined }),
+    mutationFn: (mensagem) => enviarMensagem({ sessionId, mensagem, contato }),
     onSuccess: ({ data }) => {
       setSessionId(data.sessionId)
       setUltimaResposta(data)
@@ -40,7 +40,13 @@ export function ChatWindow() {
     },
   })
 
+  const contatoValido = contato.trim().length > 0
+
   function handleEnviar(texto) {
+    if (!contatoValido) {
+      toast.error('Informe um telefone ou e-mail de contato antes de conversar.')
+      return
+    }
     setMensagens((atual) => [...atual, { role: 'user', conteudo: texto }])
     enviarMutation.mutate(texto)
   }
@@ -60,8 +66,9 @@ export function ChatWindow() {
         <Alert>
           <AlertTitle>Um profissional foi avisado</AlertTitle>
           <AlertDescription>
-            Encontramos um psicólogo e ele foi notificado para entrar em contato o quanto antes.
-            Se você deixou um contato, fique de olho nele.
+            Encontramos um psicólogo e ele foi notificado agora mesmo. <strong>Aguarde alguns minutos</strong> —
+            ele vai entrar em contato o quanto antes, seja pelo contato que você deixou ou por aqui mesmo.
+            Enquanto isso, continue respirando com calma; você não está sozinho(a).
           </AlertDescription>
         </Alert>
       )}
@@ -69,9 +76,19 @@ export function ChatWindow() {
       {ultimaResposta?.crise && !ultimaResposta.profissionalAcionado && (
         <Alert variant="destructive">
           <AlertTitle>Não encontramos um profissional disponível agora</AlertTitle>
-          <AlertDescription>
-            Se você está em perigo imediato, use um destes contatos:
-            <div className="mt-2 flex flex-col gap-1">
+          <AlertDescription className="flex flex-col gap-3">
+            <span>
+              No momento não há nenhum psicólogo de plantão nem horário próximo disponível. Recomendamos que
+              você{' '}
+              <Link to="/cadastro/paciente" className="font-medium underline underline-offset-4">
+                agende uma sessão
+              </Link>{' '}
+              o quanto antes para ter acompanhamento profissional.
+            </span>
+            <span>
+              Se a situação for muito urgente e você precisar de ajuda imediata, entre em contato com o CVV:
+            </span>
+            <div className="flex flex-col gap-1">
               {ultimaResposta.contatosEmergencia.map((contatoEmergencia) => (
                 <a
                   key={contatoEmergencia.url}
@@ -102,17 +119,21 @@ export function ChatWindow() {
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="contato" className="text-xs text-muted-foreground">
-          Contato para retorno em caso de crise (opcional)
+          Telefone ou e-mail de contato <span className="text-destructive">*</span>
         </Label>
         <Input
           id="contato"
           placeholder="Telefone ou e-mail"
           value={contato}
           onChange={(e) => setContato(e.target.value)}
+          required
         />
+        <p className="text-xs text-muted-foreground">
+          Precisamos desse contato para que um psicólogo possa falar com você em caso de crise.
+        </p>
       </div>
 
-      <ChatInput disabled={enviarMutation.isPending} onEnviar={handleEnviar} />
+      <ChatInput disabled={enviarMutation.isPending || !contatoValido} onEnviar={handleEnviar} />
 
       <p className="text-center text-xs text-muted-foreground">
         Precisa de ajuda imediata? CVV —{' '}

@@ -1,7 +1,6 @@
-package br.com.unipsi.agenda.domain;
+package br.com.unipsi.financeiro.domain;
 
-import br.com.unipsi.usuario.domain.Paciente;
-import br.com.unipsi.usuario.domain.Psicologo;
+import br.com.unipsi.agenda.domain.Sessao;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -25,40 +23,24 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "sessao")
+@Table(name = "cobranca")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Sessao {
+public class Cobranca {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "slot_id", nullable = false, unique = true)
-    private Slot slot;
+    @JoinColumn(name = "sessao_id", nullable = false, unique = true)
+    private Sessao sessao;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "paciente_id", nullable = false)
-    private Paciente paciente;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "psicologo_id", nullable = false)
-    private Psicologo psicologo;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Modalidade modalidade;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_atendimento", nullable = false, length = 20)
-    private TipoAtendimento tipoAtendimento;
-
-    @Column(name = "valor_sessao", nullable = false, precision = 10, scale = 2)
-    private BigDecimal valorSessao;
+    @Column(name = "valor_bruto", nullable = false, precision = 10, scale = 2)
+    private BigDecimal valorBruto;
 
     @Column(name = "taxa_plataforma", nullable = false, precision = 10, scale = 2)
     private BigDecimal taxaPlataforma;
@@ -68,21 +50,16 @@ public class Sessao {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private StatusSessao status;
-
-    @Column(name = "cancelado_em")
-    private Instant canceladoEm;
+    private StatusCobranca status;
 
     @Column(name = "criada_em", nullable = false, updatable = false)
     private Instant criadaEm;
 
-    @Column(name = "lembrete_24h_enviado", nullable = false)
-    @Builder.Default
-    private boolean lembrete24hEnviado = false;
+    @Column(name = "paga_em")
+    private Instant pagaEm;
 
-    @Column(name = "lembrete_1h_enviado", nullable = false)
-    @Builder.Default
-    private boolean lembrete1hEnviado = false;
+    @Column(name = "cancelada_em")
+    private Instant canceladaEm;
 
     @PrePersist
     void aoCriar() {
