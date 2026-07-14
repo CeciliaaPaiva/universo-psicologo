@@ -23,3 +23,7 @@ export function listarSessoesPsicologo() {
 export function marcarSessaoRealizada(id) {
   return api.post(`/agenda/sessoes/${id}/realizar`)
 }
+
+export function buscarAnamnesePaciente(pacienteId) {
+  return api.get(`/usuarios/psicologo/pacientes/${pacienteId}/anamnese`)
+}

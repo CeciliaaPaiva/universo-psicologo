@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -60,16 +61,27 @@ export function SessoesPage() {
               <CardContent className="flex flex-col gap-2 text-sm">
                 <span>Paciente: {sessao.nomePaciente}</span>
                 <span>Valor: {formatarMoeda(sessao.valorSessao)}</span>
-                {sessao.status === 'AGENDADA' && (
-                  <Button
-                    size="sm"
-                    className="mt-1 w-fit"
-                    disabled={realizarMutation.isPending}
-                    onClick={() => realizarMutation.mutate(sessao.id)}
-                  >
-                    Marcar como realizada
+                <div className="mt-1 flex gap-2">
+                  {sessao.status === 'AGENDADA' && (
+                    <>
+                      <Button
+                        size="sm"
+                        disabled={realizarMutation.isPending}
+                        onClick={() => realizarMutation.mutate(sessao.id)}
+                      >
+                        Marcar como realizada
+                      </Button>
+                      <Button size="sm" variant="outline" nativeButton={false}
+                        render={<Link to={`/pacientes/${sessao.pacienteId}/anamnese`} />}>
+                        Ver anamnese
+                      </Button>
+                    </>
+                  )}
+                  <Button size="sm" variant="outline" nativeButton={false}
+                    render={<Link to={`/mensagens/${sessao.pacienteId}`} />}>
+                    Conversar
                   </Button>
-                )}
+                </div>
               </CardContent>
             </Card>
           )

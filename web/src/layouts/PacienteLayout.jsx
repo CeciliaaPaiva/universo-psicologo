@@ -7,6 +7,7 @@ const LINKS = [
   { to: '/marketplace', label: 'Encontrar psicólogo' },
   { to: '/agendamentos', label: 'Meus agendamentos' },
   { to: '/cobrancas', label: 'Cobranças' },
+  { to: '/mensagens', label: 'Mensagens' },
   { to: '/perfil-paciente', label: 'Perfil' },
 ]
 

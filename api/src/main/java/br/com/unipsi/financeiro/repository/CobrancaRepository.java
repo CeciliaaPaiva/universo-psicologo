@@ -24,4 +24,24 @@ public interface CobrancaRepository extends JpaRepository<Cobranca, UUID> {
             """)
     List<Cobranca> buscarPagasPorPsicologoNoPeriodo(
             UUID psicologoId, StatusCobranca status, Instant inicio, Instant fim);
+
+    @Query("""
+            select case when count(c) > 0 then true else false end from Cobranca c
+            where c.sessao.paciente.id = :pacienteId
+            and c.sessao.psicologo.id = :psicologoId
+            and c.status = :status
+            """)
+    boolean existsPagaEntrePacienteEPsicologo(UUID pacienteId, UUID psicologoId, StatusCobranca status);
+
+    @Query("""
+            select distinct c.sessao.psicologo.id from Cobranca c
+            where c.sessao.paciente.id = :pacienteId and c.status = :status
+            """)
+    List<UUID> buscarPsicologosComCobrancaPaga(UUID pacienteId, StatusCobranca status);
+
+    @Query("""
+            select distinct c.sessao.paciente.id from Cobranca c
+            where c.sessao.psicologo.id = :psicologoId and c.status = :status
+            """)
+    List<UUID> buscarPacientesComCobrancaPaga(UUID psicologoId, StatusCobranca status);
 }

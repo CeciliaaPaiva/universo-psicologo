@@ -7,6 +7,7 @@ const LINKS = [
   { to: '/agenda', label: 'Agenda' },
   { to: '/sessoes', label: 'Sessões' },
   { to: '/financeiro', label: 'Financeiro' },
+  { to: '/mensagens', label: 'Mensagens' },
   { to: '/plantao', label: 'Plantão' },
   { to: '/prontuario', label: 'Prontuário' },
   { to: '/perfil', label: 'Perfil' },

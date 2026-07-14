@@ -21,4 +21,6 @@ public interface SessaoRepository extends JpaRepository<Sessao, UUID> {
 
     List<Sessao> findByStatusAndLembrete1hEnviadoFalseAndSlotInicioBetween(
             StatusSessao status, LocalDateTime inicio, LocalDateTime fim);
+
+    boolean existsByPacienteIdAndPsicologoIdAndStatus(UUID pacienteId, UUID psicologoId, StatusSessao status);
 }

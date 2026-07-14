@@ -44,7 +44,7 @@ Uma história está concluída quando:
 | Sprint 4 | Chatbot de triagem — Inovação #2 | US-018, US-019, US-020, US-010 | 22 | `v0.5.0-chatbot` |
 | Sprint 4.5 | Ajustes pós-demo (reunião 07/07/2026) | US-028 + ajustes em US-005/014/015/016/019 | 5+ | `v0.5.1-ajustes-pos-demo` |
 | Sprint 5 | Financeiro e notificações | US-021, US-022, US-023, US-024, US-025 | 16 | `v0.6.0-financeiro` |
-| Sprint 5.5 | Anamnese (acesso temporário) + Mensagens internas (dependem do financeiro) | US-029, US-030 | 13 | `v0.6.1-anamnese-mensagens` |
+| Sprint 5.5 | Anamnese (acesso temporário) + Mensagens internas (dependem do financeiro) — ✅ Entregue 14/07/2026, ver `releases/v0.6.1-anamnese-mensagens.md` | US-029, US-030 | 13 | `v0.6.1-anamnese-mensagens` |
 | Sprint 6 | Administração, QA e encerramento | US-017, US-027 + QA + LGPD | 10 | `v1.0.0-mvp` |
 | **Total** | | **30 histórias** | **136** | |
 
@@ -435,6 +435,13 @@ critérios de aceitação atualizados em `Backlog-UniPsi.md`.
 Alocadas como **Sprint 5.5**, logo após o Financeiro (ver "Visão Geral" acima) — ambas só fazem
 sentido depois que `Cobranca`/status de pagamento estiver implementado, já que a regra de negócio
 das duas ("libera depois do pagamento" / "acesso até a sessão ser realizada") depende disso.
+
+**✅ Entregue em 14/07/2026** — ver `releases/v0.6.1-anamnese-mensagens.md`. US-030 foi adaptada: a
+regra original condicionava a liberação da anamnese a uma `Cobranca` paga associada à sessão ainda
+`AGENDADA`, mas no modelo financeiro implementado na Sprint 5 a cobrança só é gerada quando a sessão
+já virou `REALIZADA` — essa combinação nunca ocorreria. A liberação passou a ser por existência de
+sessão `AGENDADA` entre psicólogo e paciente, sem exigir cobrança paga, mantendo a mesma janela
+temporal pretendida.
 
 ---
 

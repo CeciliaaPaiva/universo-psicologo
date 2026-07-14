@@ -19,6 +19,9 @@ import { ChatbotPage } from '@/pages/ChatbotPage'
 import { SessoesPage } from '@/pages/SessoesPage'
 import { FinanceiroPage } from '@/pages/FinanceiroPage'
 import { CobrancasPage } from '@/pages/CobrancasPage'
+import { AnamnesePacientePage } from '@/pages/AnamnesePacientePage'
+import { MensagensListaPage } from '@/pages/MensagensListaPage'
+import { MensagensPage } from '@/pages/MensagensPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -42,6 +45,9 @@ export const router = createBrowserRouter([
           { path: '/perfil', element: <PerfilPsicologoPage /> },
           { path: '/prontuario', element: <ProntuarioPage /> },
           { path: '/prontuario/:codinome', element: <ProntuarioDetalhePage /> },
+          { path: '/pacientes/:pacienteId/anamnese', element: <AnamnesePacientePage /> },
+          { path: '/mensagens', element: <MensagensListaPage /> },
+          { path: '/mensagens/:outroId', element: <MensagensPage /> },
           { path: '/', element: <AgendaPage /> },
         ],
       },
@@ -57,6 +63,8 @@ export const router = createBrowserRouter([
           { path: '/marketplace/:id', element: <PsicologoPublicProfilePage /> },
           { path: '/agendamentos', element: <AgendamentosPage /> },
           { path: '/cobrancas', element: <CobrancasPage /> },
+          { path: '/mensagens', element: <MensagensListaPage /> },
+          { path: '/mensagens/:outroId', element: <MensagensPage /> },
           { path: '/perfil-paciente', element: <PerfilPacientePage /> },
         ],
       },
