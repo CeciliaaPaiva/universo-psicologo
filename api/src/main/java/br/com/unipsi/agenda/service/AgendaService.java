@@ -11,10 +11,12 @@ import br.com.unipsi.agenda.repository.SlotRepository;
 import br.com.unipsi.notificacao.service.EmailService;
 import br.com.unipsi.usuario.domain.Paciente;
 import br.com.unipsi.usuario.domain.Psicologo;
+import br.com.unipsi.usuario.domain.StatusAprovacao;
 import br.com.unipsi.usuario.repository.PsicologoRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -108,6 +110,19 @@ public class AgendaService {
                 motivo);
         // O slot em si não é removido quando há uma sessão vinculada (FK sessao.slot_id):
         // permanece indisponível como registro histórico da sessão cancelada.
+    }
+
+    /**
+     * Usado pelo chatbot em situação de crise (US-019, ajuste 07/07/2026) quando não há ninguém
+     * de plantão hoje: busca o psicólogo aprovado com a próxima disponibilidade mais próxima na
+     * agenda, independentemente de estar de plantão.
+     */
+    @Transactional(readOnly = true)
+    public Optional<Psicologo> buscarPsicologoComProximaDisponibilidade() {
+        return slotRepository
+                .findFirstByDisponivelTrueAndInicioAfterAndPsicologoStatusAprovacaoOrderByInicioAsc(
+                        LocalDateTime.now(), StatusAprovacao.APROVADO)
+                .map(Slot::getPsicologo);
     }
 
     private Psicologo buscarPsicologo(UUID psicologoId) {

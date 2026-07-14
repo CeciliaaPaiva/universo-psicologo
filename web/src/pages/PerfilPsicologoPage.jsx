@@ -17,6 +17,7 @@ const schema = z.object({
   especializacao: z.string().optional(),
   politicaCancelamento: z.string().min(1, 'Descreva sua política de cancelamento'),
   linkVideochamada: z.string().optional(),
+  areasAtuacao: z.string().optional(),
   foto: z.instanceof(FileList).optional(),
 })
 
@@ -39,12 +40,25 @@ export function PerfilPsicologoPage() {
         especializacao: data.especializacao ?? '',
         politicaCancelamento: data.politicaCancelamento ?? '',
         linkVideochamada: data.linkVideochamada ?? '',
+        areasAtuacao: (data.areasAtuacao ?? []).join(', '),
       })
     }
   }, [data, reset])
 
   const salvarMutation = useMutation({
-    mutationFn: ({ foto, ...dados }) => atualizarPerfilPsicologo(dados, foto?.[0]),
+    mutationFn: ({ foto, areasAtuacao, ...dados }) =>
+      atualizarPerfilPsicologo(
+        {
+          ...dados,
+          areasAtuacao: areasAtuacao
+            ? areasAtuacao
+                .split(',')
+                .map((area) => area.trim())
+                .filter(Boolean)
+            : [],
+        },
+        foto?.[0],
+      ),
     onSuccess: () => toast.success('Perfil atualizado'),
     onError: (error) => toast.error(error.response?.data?.mensagem ?? 'Não foi possível atualizar o perfil'),
   })
@@ -81,7 +95,19 @@ export function PerfilPsicologoPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="especializacao">Especialização</Label>
-              <Input id="especializacao" {...register('especializacao')} />
+              <Input id="especializacao" placeholder="Ex.: TCC e Esquemas" {...register('especializacao')} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="areasAtuacao">Áreas de atuação</Label>
+              <Input
+                id="areasAtuacao"
+                placeholder="Ex.: ansiedade, luto, terapia de casal"
+                {...register('areasAtuacao')}
+              />
+              <p className="text-xs text-muted-foreground">
+                Temas e situações que você atende, separados por vírgula. Aparecem como tags no seu card do
+                marketplace.
+              </p>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="politicaCancelamento">Política de cancelamento</Label>

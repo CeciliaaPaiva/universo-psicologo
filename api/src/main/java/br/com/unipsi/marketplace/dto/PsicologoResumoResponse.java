@@ -9,6 +9,7 @@ public record PsicologoResumoResponse(
         UUID id,
         String nome,
         String especializacao,
+        List<String> areasAtuacao,
         String fotoUrl,
         List<LocalDateTime> proximasDisponibilidades,
         BigDecimal valorAvulsa,

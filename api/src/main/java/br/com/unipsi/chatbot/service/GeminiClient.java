@@ -24,7 +24,7 @@ import org.springframework.web.client.RestClient;
 public class GeminiClient {
 
     private static final Logger log = LoggerFactory.getLogger(GeminiClient.class);
-    private static final String MODELO = "gemini-1.5-flash";
+    private static final String MODELO = "gemini-flash-latest";
 
     private static final String FALLBACK_CRISE = """
             Sinto muito que você esteja passando por isso — o que você está sentindo é válido e você não está \

@@ -24,8 +24,8 @@ public class MarketplaceController {
 
     @GetMapping
     public List<PsicologoResumoResponse> buscar(
-            Authentication auth, @RequestParam(required = false) String especialidade) {
-        return marketplaceService.buscar(pacienteId(auth), especialidade);
+            Authentication auth, @RequestParam(required = false) String areaAtuacao) {
+        return marketplaceService.buscar(pacienteId(auth), areaAtuacao);
     }
 
     @GetMapping("/{id}")

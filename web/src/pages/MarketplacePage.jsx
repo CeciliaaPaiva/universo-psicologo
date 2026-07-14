@@ -20,11 +20,11 @@ function formatarDisponibilidade(dataHoraIso) {
 }
 
 export function MarketplacePage() {
-  const [especialidade, setEspecialidade] = useState('')
+  const [areaAtuacao, setAreaAtuacao] = useState('')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['marketplace-psicologos', especialidade],
-    queryFn: () => buscarPsicologos(especialidade).then((res) => res.data),
+    queryKey: ['marketplace-psicologos', areaAtuacao],
+    queryFn: () => buscarPsicologos(areaAtuacao).then((res) => res.data),
   })
 
   return (
@@ -37,12 +37,12 @@ export function MarketplacePage() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="especialidade">Especialidade</Label>
+        <Label htmlFor="areaAtuacao">Áreas de atuação</Label>
         <Input
-          id="especialidade"
+          id="areaAtuacao"
           placeholder="Ex.: ansiedade, luto, terapia de casal..."
-          value={especialidade}
-          onChange={(e) => setEspecialidade(e.target.value)}
+          value={areaAtuacao}
+          onChange={(e) => setAreaAtuacao(e.target.value)}
         />
       </div>
 
@@ -56,6 +56,15 @@ export function MarketplacePage() {
             <CardHeader>
               <CardTitle>{psicologo.nome}</CardTitle>
               {psicologo.especializacao && <CardDescription>{psicologo.especializacao}</CardDescription>}
+              {psicologo.areasAtuacao?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {psicologo.areasAtuacao.map((area) => (
+                    <Badge key={area} variant="secondary">
+                      {area}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <div className="flex flex-wrap gap-2">

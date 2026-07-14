@@ -1,7 +1,10 @@
 package br.com.unipsi.usuario.controller;
 
+import br.com.unipsi.usuario.dto.AnamneseRequest;
+import br.com.unipsi.usuario.dto.AnamneseResponse;
 import br.com.unipsi.usuario.dto.AtualizarPerfilPacienteRequest;
 import br.com.unipsi.usuario.dto.PerfilPacienteResponse;
+import br.com.unipsi.usuario.service.AnamneseService;
 import br.com.unipsi.usuario.service.PacienteService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -12,7 +15,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/usuarios/paciente")
@@ -21,16 +26,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class PacienteController {
 
     private final PacienteService pacienteService;
+    private final AnamneseService anamneseService;
 
     @GetMapping("/perfil")
     public PerfilPacienteResponse perfil(Authentication auth) {
         return pacienteService.buscarPerfil(pacienteId(auth));
     }
 
-    @PutMapping("/perfil")
+    @PutMapping(value = "/perfil", consumes = "multipart/form-data")
     public PerfilPacienteResponse atualizarPerfil(
-            Authentication auth, @RequestBody @Valid AtualizarPerfilPacienteRequest dados) {
-        return pacienteService.atualizarPerfil(pacienteId(auth), dados);
+            Authentication auth,
+            @RequestPart("dados") @Valid AtualizarPerfilPacienteRequest dados,
+            @RequestPart(value = "foto", required = false) MultipartFile foto) {
+        return pacienteService.atualizarPerfil(pacienteId(auth), dados, foto);
+    }
+
+    @GetMapping("/anamnese")
+    public AnamneseResponse anamnese(Authentication auth) {
+        return anamneseService.buscar(pacienteId(auth));
+    }
+
+    @PutMapping("/anamnese")
+    public AnamneseResponse atualizarAnamnese(Authentication auth, @RequestBody @Valid AnamneseRequest dados) {
+        return anamneseService.salvar(pacienteId(auth), dados);
     }
 
     private UUID pacienteId(Authentication auth) {

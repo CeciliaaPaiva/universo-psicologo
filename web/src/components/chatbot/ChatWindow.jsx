@@ -56,26 +56,32 @@ export function ChatWindow() {
         </CardContent>
       </Card>
 
-      {ultimaResposta?.crise && ultimaResposta.plantaoAcionado && (
+      {ultimaResposta?.crise && ultimaResposta.profissionalAcionado && (
         <Alert>
-          <AlertTitle>Um psicólogo de plantão foi avisado</AlertTitle>
+          <AlertTitle>Um profissional foi avisado</AlertTitle>
           <AlertDescription>
-            Encontramos um profissional disponível agora e ele foi notificado para entrar em
-            contato o quanto antes. Se você deixou um contato, fique de olho nele.
+            Encontramos um psicólogo e ele foi notificado para entrar em contato o quanto antes.
+            Se você deixou um contato, fique de olho nele.
           </AlertDescription>
         </Alert>
       )}
 
-      {ultimaResposta?.crise && !ultimaResposta.plantaoAcionado && (
+      {ultimaResposta?.crise && !ultimaResposta.profissionalAcionado && (
         <Alert variant="destructive">
-          <AlertTitle>Não há psicólogo de plantão no momento</AlertTitle>
+          <AlertTitle>Não encontramos um profissional disponível agora</AlertTitle>
           <AlertDescription>
-            Se você está em perigo imediato, ligue agora:
+            Se você está em perigo imediato, use um destes contatos:
             <div className="mt-2 flex flex-col gap-1">
               {ultimaResposta.contatosEmergencia.map((contatoEmergencia) => (
-                <span key={contatoEmergencia} className="font-medium">
-                  {contatoEmergencia}
-                </span>
+                <a
+                  key={contatoEmergencia.url}
+                  href={contatoEmergencia.url}
+                  target={contatoEmergencia.url.startsWith('tel:') ? undefined : '_blank'}
+                  rel="noreferrer"
+                  className="font-medium underline underline-offset-4"
+                >
+                  {contatoEmergencia.label}
+                </a>
               ))}
             </div>
           </AlertDescription>
@@ -107,6 +113,23 @@ export function ChatWindow() {
       </div>
 
       <ChatInput disabled={enviarMutation.isPending} onEnviar={handleEnviar} />
+
+      <p className="text-center text-xs text-muted-foreground">
+        Precisa de ajuda imediata? CVV —{' '}
+        <a
+          href="https://cvv.org.br/chat/"
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium underline underline-offset-4"
+        >
+          chat online
+        </a>{' '}
+        ou{' '}
+        <a href="tel:188" className="font-medium underline underline-offset-4">
+          ligue 188
+        </a>{' '}
+        (24h, gratuito)
+      </p>
     </div>
   )
 }

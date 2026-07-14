@@ -30,6 +30,9 @@ public class PsicologoService {
         psicologo.setEspecializacao(dados.especializacao());
         psicologo.setPoliticaCancelamento(dados.politicaCancelamento());
         psicologo.setLinkVideochamada(dados.linkVideochamada());
+        if (dados.areasAtuacao() != null) {
+            psicologo.setAreasAtuacao(dados.areasAtuacao());
+        }
 
         if (foto != null && !foto.isEmpty()) {
             psicologo.setFotoUrl(minioService.enviarFoto(psicologoId, foto));

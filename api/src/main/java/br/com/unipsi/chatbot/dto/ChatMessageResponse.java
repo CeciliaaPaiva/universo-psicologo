@@ -6,7 +6,10 @@ public record ChatMessageResponse(
         String sessionId,
         String resposta,
         boolean crise,
-        boolean plantaoAcionado,
-        List<String> contatosEmergencia,
+        boolean profissionalAcionado,
+        List<ContatoEmergencia> contatosEmergencia,
         boolean sugerirMarketplace) {
+
+    public record ContatoEmergencia(String label, String url) {
+    }
 }

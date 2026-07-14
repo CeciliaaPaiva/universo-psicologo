@@ -1,6 +1,7 @@
 package br.com.unipsi.marketplace.service;
 
 import br.com.unipsi.agenda.domain.Modalidade;
+import br.com.unipsi.agenda.domain.TipoAtendimento;
 import br.com.unipsi.usuario.domain.FaixaRenda;
 import br.com.unipsi.usuario.domain.PacienteNaoElegivelException;
 import java.math.BigDecimal;
@@ -33,6 +34,28 @@ public class PrecificacaoService {
             case AVULSA -> valorAvulsa(faixaRenda);
             case PACOTE_MENSAL -> valorPacotePorSessao(faixaRenda);
         };
+    }
+
+    /**
+     * Terapia de casal custa o dobro do valor individual na mesma faixa/modalidade
+     * (ajuste 07/07/2026 — ver atas/2026-07-07-alinhamento-sprint-4.md).
+     */
+    public BigDecimal calcularValorSessao(FaixaRenda faixaRenda, Modalidade modalidade, TipoAtendimento tipoAtendimento) {
+        BigDecimal valorIndividual = calcularValorSessao(faixaRenda, modalidade);
+        return tipoAtendimento == TipoAtendimento.CASAL
+                ? valorIndividual.multiply(BigDecimal.valueOf(2))
+                : valorIndividual;
+    }
+
+    public BigDecimal calcularValorPacoteTotal(FaixaRenda faixaRenda, TipoAtendimento tipoAtendimento) {
+        return calcularValorSessao(faixaRenda, Modalidade.PACOTE_MENSAL, tipoAtendimento)
+                .multiply(BigDecimal.valueOf(4));
+    }
+
+    public BigDecimal calcularEconomiaPacote(FaixaRenda faixaRenda, TipoAtendimento tipoAtendimento) {
+        BigDecimal totalAvulsa = calcularValorSessao(faixaRenda, Modalidade.AVULSA, tipoAtendimento)
+                .multiply(BigDecimal.valueOf(4));
+        return totalAvulsa.subtract(calcularValorPacoteTotal(faixaRenda, tipoAtendimento));
     }
 
     public BigDecimal calcularTaxa(BigDecimal valorSessao) {

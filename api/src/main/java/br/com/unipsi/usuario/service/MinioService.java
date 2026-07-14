@@ -51,7 +51,7 @@ public class MinioService {
         return chaveObjeto;
     }
 
-    public String enviarFoto(UUID psicologoId, MultipartFile arquivo) {
+    public String enviarFoto(UUID donoId, MultipartFile arquivo) {
         if (arquivo == null || arquivo.isEmpty()) {
             throw new IllegalArgumentException("Foto é obrigatória");
         }
@@ -62,7 +62,7 @@ public class MinioService {
             throw new IllegalArgumentException("Foto deve ter no máximo 2 MB");
         }
 
-        String chaveObjeto = "fotos/%s/%s".formatted(psicologoId, arquivo.getOriginalFilename());
+        String chaveObjeto = "fotos/%s/%s".formatted(donoId, arquivo.getOriginalFilename());
         try (var inputStream = arquivo.getInputStream()) {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucket)

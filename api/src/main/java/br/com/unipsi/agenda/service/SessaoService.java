@@ -1,5 +1,6 @@
 package br.com.unipsi.agenda.service;
 
+import br.com.unipsi.agenda.domain.Modalidade;
 import br.com.unipsi.agenda.domain.Sessao;
 import br.com.unipsi.agenda.domain.Slot;
 import br.com.unipsi.agenda.domain.SlotIndisponivelException;
@@ -43,7 +44,8 @@ public class SessaoService {
             throw new SlotIndisponivelException("Este horário não está mais disponível");
         }
 
-        BigDecimal valorSessao = precificacaoService.calcularValorSessao(paciente.getFaixaRenda(), pedido.modalidade());
+        BigDecimal valorSessao = precificacaoService.calcularValorSessao(
+                paciente.getFaixaRenda(), pedido.modalidade(), pedido.tipoAtendimento());
         BigDecimal taxaPlataforma = precificacaoService.calcularTaxa(valorSessao);
         BigDecimal valorLiquido = precificacaoService.calcularValorLiquido(valorSessao, taxaPlataforma);
 
@@ -55,6 +57,7 @@ public class SessaoService {
                 .paciente(paciente)
                 .psicologo(slot.getPsicologo())
                 .modalidade(pedido.modalidade())
+                .tipoAtendimento(pedido.tipoAtendimento())
                 .valorSessao(valorSessao)
                 .taxaPlataforma(taxaPlataforma)
                 .valorLiquido(valorLiquido)
@@ -63,14 +66,24 @@ public class SessaoService {
 
         notificarAgendamento(sessao);
 
-        return SessaoResponse.from(sessao);
+        return paraResposta(sessao);
     }
 
     @Transactional(readOnly = true)
     public List<SessaoResponse> listar(UUID pacienteId) {
         return sessaoRepository.findByPacienteIdOrderByCriadaEmDesc(pacienteId).stream()
-                .map(SessaoResponse::from)
+                .map(this::paraResposta)
                 .toList();
+    }
+
+    private SessaoResponse paraResposta(Sessao sessao) {
+        var faixaRenda = sessao.getPaciente().getFaixaRenda();
+        var tipoAtendimento = sessao.getTipoAtendimento();
+        BigDecimal valorSessaoAvulsa =
+                precificacaoService.calcularValorSessao(faixaRenda, Modalidade.AVULSA, tipoAtendimento);
+        BigDecimal valorPacoteTotal = precificacaoService.calcularValorPacoteTotal(faixaRenda, tipoAtendimento);
+        BigDecimal economiaPacote = precificacaoService.calcularEconomiaPacote(faixaRenda, tipoAtendimento);
+        return SessaoResponse.from(sessao, valorSessaoAvulsa, valorPacoteTotal, economiaPacote);
     }
 
     private void notificarAgendamento(Sessao sessao) {

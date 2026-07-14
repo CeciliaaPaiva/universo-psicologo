@@ -9,6 +9,7 @@ public record PsicologoPerfilResponse(
         UUID id,
         String nome,
         String especializacao,
+        List<String> areasAtuacao,
         String politicaCancelamento,
         String linkVideochamada,
         String fotoUrl,

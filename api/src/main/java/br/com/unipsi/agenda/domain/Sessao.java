@@ -53,6 +53,10 @@ public class Sessao {
     @Column(nullable = false, length = 20)
     private Modalidade modalidade;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_atendimento", nullable = false, length = 20)
+    private TipoAtendimento tipoAtendimento;
+
     @Column(name = "valor_sessao", nullable = false, precision = 10, scale = 2)
     private BigDecimal valorSessao;
 

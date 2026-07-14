@@ -10,6 +10,7 @@ import br.com.unipsi.agenda.domain.Sessao;
 import br.com.unipsi.agenda.domain.Slot;
 import br.com.unipsi.agenda.domain.SlotIndisponivelException;
 import br.com.unipsi.agenda.domain.StatusSessao;
+import br.com.unipsi.agenda.domain.TipoAtendimento;
 import br.com.unipsi.agenda.dto.AgendarSessaoRequest;
 import br.com.unipsi.agenda.dto.SessaoResponse;
 import br.com.unipsi.agenda.repository.SessaoRepository;
@@ -83,18 +84,23 @@ class SessaoServiceTest {
     void agendar_slotDisponivel_deveCriarSessaoEMarcarSlotIndisponivel() {
         when(pacienteRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(slotRepository.findById(slotId)).thenReturn(Optional.of(slot));
-        when(precificacaoService.calcularValorSessao(FaixaRenda.FAIXA_1, Modalidade.AVULSA))
+        when(precificacaoService.calcularValorSessao(FaixaRenda.FAIXA_1, Modalidade.AVULSA, TipoAtendimento.INDIVIDUAL))
                 .thenReturn(new BigDecimal("60.00"));
         when(precificacaoService.calcularTaxa(new BigDecimal("60.00"))).thenReturn(new BigDecimal("12.00"));
         when(precificacaoService.calcularValorLiquido(new BigDecimal("60.00"), new BigDecimal("12.00")))
                 .thenReturn(new BigDecimal("48.00"));
+        when(precificacaoService.calcularValorPacoteTotal(FaixaRenda.FAIXA_1, TipoAtendimento.INDIVIDUAL))
+                .thenReturn(new BigDecimal("228.00"));
+        when(precificacaoService.calcularEconomiaPacote(FaixaRenda.FAIXA_1, TipoAtendimento.INDIVIDUAL))
+                .thenReturn(new BigDecimal("12.00"));
         when(sessaoRepository.save(any(Sessao.class))).thenAnswer(invocation -> {
             Sessao sessao = invocation.getArgument(0);
             sessao.setId(UUID.randomUUID());
             return sessao;
         });
 
-        SessaoResponse resposta = sessaoService.agendar(pacienteId, new AgendarSessaoRequest(slotId, Modalidade.AVULSA));
+        SessaoResponse resposta = sessaoService.agendar(
+                pacienteId, new AgendarSessaoRequest(slotId, Modalidade.AVULSA, TipoAtendimento.INDIVIDUAL));
 
         assertThat(slot.isDisponivel()).isFalse();
         assertThat(resposta.valorSessao()).isEqualByComparingTo("60.00");
@@ -107,7 +113,8 @@ class SessaoServiceTest {
         when(pacienteRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(slotRepository.findById(slotId)).thenReturn(Optional.of(slot));
 
-        assertThatThrownBy(() -> sessaoService.agendar(pacienteId, new AgendarSessaoRequest(slotId, Modalidade.AVULSA)))
+        assertThatThrownBy(() -> sessaoService.agendar(
+                        pacienteId, new AgendarSessaoRequest(slotId, Modalidade.AVULSA, TipoAtendimento.INDIVIDUAL)))
                 .isInstanceOf(SlotIndisponivelException.class);
     }
 
@@ -118,8 +125,35 @@ class SessaoServiceTest {
         when(pacienteRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(slotRepository.findById(slotId)).thenReturn(Optional.of(slot));
 
-        assertThatThrownBy(() -> sessaoService.agendar(pacienteId, new AgendarSessaoRequest(slotId, Modalidade.AVULSA)))
+        assertThatThrownBy(() -> sessaoService.agendar(
+                        pacienteId, new AgendarSessaoRequest(slotId, Modalidade.AVULSA, TipoAtendimento.INDIVIDUAL)))
                 .isInstanceOf(SlotIndisponivelException.class);
+    }
+
+    @Test
+    void agendar_terapiaDeCasal_deveCalcularValorEmDobro() {
+        when(pacienteRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
+        when(slotRepository.findById(slotId)).thenReturn(Optional.of(slot));
+        when(precificacaoService.calcularValorSessao(FaixaRenda.FAIXA_1, Modalidade.AVULSA, TipoAtendimento.CASAL))
+                .thenReturn(new BigDecimal("120.00"));
+        when(precificacaoService.calcularTaxa(new BigDecimal("120.00"))).thenReturn(new BigDecimal("24.00"));
+        when(precificacaoService.calcularValorLiquido(new BigDecimal("120.00"), new BigDecimal("24.00")))
+                .thenReturn(new BigDecimal("96.00"));
+        when(precificacaoService.calcularValorPacoteTotal(FaixaRenda.FAIXA_1, TipoAtendimento.CASAL))
+                .thenReturn(new BigDecimal("456.00"));
+        when(precificacaoService.calcularEconomiaPacote(FaixaRenda.FAIXA_1, TipoAtendimento.CASAL))
+                .thenReturn(new BigDecimal("24.00"));
+        when(sessaoRepository.save(any(Sessao.class))).thenAnswer(invocation -> {
+            Sessao sessao = invocation.getArgument(0);
+            sessao.setId(UUID.randomUUID());
+            return sessao;
+        });
+
+        SessaoResponse resposta = sessaoService.agendar(
+                pacienteId, new AgendarSessaoRequest(slotId, Modalidade.AVULSA, TipoAtendimento.CASAL));
+
+        assertThat(resposta.valorSessao()).isEqualByComparingTo("120.00");
+        assertThat(resposta.tipoAtendimento()).isEqualTo(TipoAtendimento.CASAL);
     }
 
     @Test
@@ -130,10 +164,17 @@ class SessaoServiceTest {
                 .paciente(paciente)
                 .psicologo(psicologo)
                 .modalidade(Modalidade.AVULSA)
+                .tipoAtendimento(TipoAtendimento.INDIVIDUAL)
                 .valorSessao(new BigDecimal("60.00"))
                 .status(StatusSessao.AGENDADA)
                 .build();
         when(sessaoRepository.findByPacienteIdOrderByCriadaEmDesc(pacienteId)).thenReturn(List.of(sessao));
+        when(precificacaoService.calcularValorSessao(FaixaRenda.FAIXA_1, Modalidade.AVULSA, TipoAtendimento.INDIVIDUAL))
+                .thenReturn(new BigDecimal("60.00"));
+        when(precificacaoService.calcularValorPacoteTotal(FaixaRenda.FAIXA_1, TipoAtendimento.INDIVIDUAL))
+                .thenReturn(new BigDecimal("228.00"));
+        when(precificacaoService.calcularEconomiaPacote(FaixaRenda.FAIXA_1, TipoAtendimento.INDIVIDUAL))
+                .thenReturn(new BigDecimal("12.00"));
 
         List<SessaoResponse> respostas = sessaoService.listar(pacienteId);
 

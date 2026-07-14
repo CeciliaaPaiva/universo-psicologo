@@ -90,6 +90,21 @@ public class EmailService {
                 (contatoInformado != null && !contatoInformado.isBlank()) ? contatoInformado : "não informado"));
     }
 
+    public void enviarAlertaProximaDisponibilidade(String email, String nomePsicologo, String contatoInformado) {
+        resendClient.enviar(email, "🔴 Possível situação de crise — Universo Psicólogo", """
+                <p>Olá, %s!</p>
+                <p>O chatbot de triagem identificou uma situação de crise. Não há ninguém de plantão
+                agora, e você é o profissional aprovado com a próxima disponibilidade mais próxima na
+                agenda.</p>
+                <p><strong>Horário do acionamento:</strong> %s</p>
+                <p><strong>Contato informado pelo visitante:</strong> %s</p>
+                <p>Se possível, entre em contato antes do horário agendado.</p>
+                """.formatted(
+                nomePsicologo,
+                LocalDateTime.now().format(FORMATO_DATA_HORA),
+                (contatoInformado != null && !contatoInformado.isBlank()) ? contatoInformado : "não informado"));
+    }
+
     private String linkVideochamadaHtml(String linkVideochamada) {
         return (linkVideochamada != null && !linkVideochamada.isBlank())
                 ? "<p>Link da videochamada: <a href=\"%s\">%s</a></p>".formatted(linkVideochamada, linkVideochamada)

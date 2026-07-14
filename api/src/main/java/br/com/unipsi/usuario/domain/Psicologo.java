@@ -1,6 +1,8 @@
 package br.com.unipsi.usuario.domain;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,6 +12,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -61,4 +65,15 @@ public class Psicologo {
 
     @Column(name = "google_refresh_token", length = 500)
     private String googleRefreshToken;
+
+    /**
+     * Temas/situações atendidas pelo psicólogo (ex.: ansiedade, luto, terapia de casal),
+     * exibidas como tags no marketplace. Distinto de {@link #especializacao}, que é a
+     * formação/abordagem clínica.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "psicologo_area_atuacao", joinColumns = @JoinColumn(name = "psicologo_id"))
+    @Column(name = "area")
+    @Builder.Default
+    private List<String> areasAtuacao = new ArrayList<>();
 }

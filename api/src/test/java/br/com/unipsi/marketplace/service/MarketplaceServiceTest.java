@@ -76,9 +76,9 @@ class MarketplaceServiceTest {
     }
 
     @Test
-    void buscar_deveFiltrarPorEspecialidadeIgnorandoCaixa() {
-        Psicologo ansiedade = psicologoAprovado("Ana", "Ansiedade");
-        Psicologo luto = psicologoAprovado("Bruno", "Luto");
+    void buscar_deveFiltrarPorAreaDeAtuacaoIgnorandoCaixa() {
+        Psicologo ansiedade = psicologoAprovado("Ana", "TCC", "Ansiedade");
+        Psicologo luto = psicologoAprovado("Bruno", "Psicanálise", "Luto");
 
         when(pacienteRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(psicologoRepository.findByStatusAprovacao(StatusAprovacao.APROVADO))
@@ -87,7 +87,7 @@ class MarketplaceServiceTest {
                 .thenReturn(List.of(slotFuturo(ansiedade)));
         when(precificacaoService.calcularValorSessao(any(), any())).thenReturn(java.math.BigDecimal.TEN);
 
-        List<PsicologoResumoResponse> resultado = marketplaceService.buscar(pacienteId, "ansi");
+        List<PsicologoResumoResponse> resultado = marketplaceService.buscar(pacienteId, "ANSI");
 
         assertThat(resultado).hasSize(1);
         assertThat(resultado.get(0).nome()).isEqualTo("Ana");
@@ -123,11 +123,16 @@ class MarketplaceServiceTest {
     }
 
     private Psicologo psicologoAprovado(String nome, String especializacao) {
+        return psicologoAprovado(nome, especializacao, "Geral");
+    }
+
+    private Psicologo psicologoAprovado(String nome, String especializacao, String... areasAtuacao) {
         Usuario usuario = Usuario.builder().nome(nome).build();
         return Psicologo.builder()
                 .id(UUID.randomUUID())
                 .usuario(usuario)
                 .especializacao(especializacao)
+                .areasAtuacao(List.of(areasAtuacao))
                 .statusAprovacao(StatusAprovacao.APROVADO)
                 .build();
     }

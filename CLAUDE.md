@@ -75,7 +75,7 @@ e demonstrar por esses domínios**, não por `localhost:8100`/`localhost:8101` �
   adicionadas para depuração pontual, mas não removam a do Caddy.
 
 ### Serviços externos
-- **Google Gemini API** (`gemini-1.5-flash`) — chatbot de triagem; tier gratuito: 1.500 req/dia
+- **Google Gemini API** (`gemini-flash-latest` — alias sempre válido para o modelo flash estável atual; `gemini-1.5-flash`/`gemini-2.0-flash` foram descontinuados pelo Google em 2026) — chatbot de triagem; tier gratuito
 - **Resend API** — envio de e-mails; tier gratuito: 100 e-mails/dia
 - **Google Calendar API** — sincronização de agenda via OAuth 2.0
 

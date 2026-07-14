@@ -1,4 +1,7 @@
 package br.com.unipsi.usuario.dto;
 
-public record AtualizarPerfilPsicologoRequest(String especializacao, String politicaCancelamento, String linkVideochamada) {
+import java.util.List;
+
+public record AtualizarPerfilPsicologoRequest(
+        String especializacao, String politicaCancelamento, String linkVideochamada, List<String> areasAtuacao) {
 }

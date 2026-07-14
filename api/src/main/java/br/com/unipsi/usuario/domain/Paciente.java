@@ -37,4 +37,13 @@ public class Paciente {
     @Enumerated(EnumType.STRING)
     @Column(name = "faixa_renda", nullable = false, length = 30)
     private FaixaRenda faixaRenda;
+
+    @Column(name = "foto_url", length = 500)
+    private String fotoUrl;
+
+    private Integer idade;
+
+    public boolean isMenorDeIdade() {
+        return idade != null && idade < 18;
+    }
 }

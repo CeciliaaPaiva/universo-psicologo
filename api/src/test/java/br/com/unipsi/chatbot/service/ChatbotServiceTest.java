@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import br.com.unipsi.agenda.service.AgendaService;
 import br.com.unipsi.chatbot.domain.ChatMessage;
 import br.com.unipsi.chatbot.domain.RateLimitExcedidoException;
 import br.com.unipsi.chatbot.domain.StatusTriagem;
@@ -22,6 +23,7 @@ import br.com.unipsi.plantao.service.PlantaoService;
 import br.com.unipsi.usuario.domain.Psicologo;
 import br.com.unipsi.usuario.domain.Usuario;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -48,6 +50,9 @@ class ChatbotServiceTest {
     private PlantaoService plantaoService;
 
     @Mock
+    private AgendaService agendaService;
+
+    @Mock
     private EmailService emailService;
 
     @InjectMocks
@@ -64,10 +69,10 @@ class ChatbotServiceTest {
                 chatbotService.processarMensagem("1.2.3.4", new ChatMessageRequest(null, "Oi", null));
 
         assertThat(resposta.crise()).isFalse();
-        assertThat(resposta.plantaoAcionado()).isFalse();
+        assertThat(resposta.profissionalAcionado()).isFalse();
         assertThat(resposta.contatosEmergencia()).isEmpty();
         assertThat(resposta.sugerirMarketplace()).isTrue();
-        verifyNoInteractions(plantaoService, emailService);
+        verifyNoInteractions(plantaoService, agendaService, emailService);
     }
 
     @Test
@@ -85,27 +90,53 @@ class ChatbotServiceTest {
                 "1.2.3.4", new ChatMessageRequest(null, "não aguento mais", "11999990000"));
 
         assertThat(resposta.crise()).isTrue();
-        assertThat(resposta.plantaoAcionado()).isTrue();
+        assertThat(resposta.profissionalAcionado()).isTrue();
         assertThat(resposta.contatosEmergencia()).isEmpty();
         verify(emailService).enviarAlertaPlantao("psi1@teste.com", "Psi Um", "11999990000");
         verify(emailService).enviarAlertaPlantao("psi2@teste.com", "Psi Dois", "11999990000");
         verify(emailService, times(2)).enviarAlertaPlantao(anyString(), anyString(), any());
+        verifyNoInteractions(agendaService);
     }
 
     @Test
-    void processarMensagem_criseSemPlantaoAtivo_deveRetornarContatosEmergencia() {
+    void processarMensagem_criseSemPlantaoMasComProximaDisponibilidade_deveNotificarEsseProfissional() {
+        Psicologo proximo = psicologoComEmail("psi3@teste.com", "Psi Três");
+
         when(rateLimitService.excedeuLimite(anyString())).thenReturn(false);
         when(conversacaoStateService.obterHistorico(anyString())).thenReturn(List.of());
         when(geminiClient.gerarResposta(anyList())).thenReturn("resposta de crise");
         when(criseDetectorService.classificar("resposta de crise")).thenReturn(StatusTriagem.CRISE);
         when(plantaoService.buscarPsicologosDePlantaoHoje()).thenReturn(List.of());
+        when(agendaService.buscarPsicologoComProximaDisponibilidade()).thenReturn(Optional.of(proximo));
+
+        ChatMessageResponse resposta = chatbotService.processarMensagem(
+                "1.2.3.4", new ChatMessageRequest(null, "não aguento mais", "11999990000"));
+
+        assertThat(resposta.crise()).isTrue();
+        assertThat(resposta.profissionalAcionado()).isTrue();
+        assertThat(resposta.contatosEmergencia()).isEmpty();
+        verify(emailService).enviarAlertaProximaDisponibilidade("psi3@teste.com", "Psi Três", "11999990000");
+        verify(emailService, never()).enviarAlertaPlantao(anyString(), anyString(), any());
+    }
+
+    @Test
+    void processarMensagem_criseSemPlantaoENemDisponibilidade_deveRetornarContatosEmergencia() {
+        when(rateLimitService.excedeuLimite(anyString())).thenReturn(false);
+        when(conversacaoStateService.obterHistorico(anyString())).thenReturn(List.of());
+        when(geminiClient.gerarResposta(anyList())).thenReturn("resposta de crise");
+        when(criseDetectorService.classificar("resposta de crise")).thenReturn(StatusTriagem.CRISE);
+        when(plantaoService.buscarPsicologosDePlantaoHoje()).thenReturn(List.of());
+        when(agendaService.buscarPsicologoComProximaDisponibilidade()).thenReturn(Optional.empty());
 
         ChatMessageResponse resposta =
                 chatbotService.processarMensagem("1.2.3.4", new ChatMessageRequest(null, "socorro", null));
 
         assertThat(resposta.crise()).isTrue();
-        assertThat(resposta.plantaoAcionado()).isFalse();
-        assertThat(resposta.contatosEmergencia()).containsExactly("CVV: 188", "SAMU: 192");
+        assertThat(resposta.profissionalAcionado()).isFalse();
+        assertThat(resposta.contatosEmergencia()).extracting("label")
+                .containsExactly("CVV — conversar no chat", "CVV — ligar (188)", "SAMU (192)");
+        assertThat(resposta.contatosEmergencia()).extracting("url")
+                .containsExactly("https://cvv.org.br/chat/", "tel:188", "tel:192");
         verifyNoInteractions(emailService);
     }
 
@@ -145,7 +176,8 @@ class ChatbotServiceTest {
         assertThatThrownBy(() ->
                         chatbotService.processarMensagem("1.2.3.4", new ChatMessageRequest(null, "oi", null)))
                 .isInstanceOf(RateLimitExcedidoException.class);
-        verifyNoInteractions(conversacaoStateService, geminiClient, criseDetectorService, plantaoService, emailService);
+        verifyNoInteractions(
+                conversacaoStateService, geminiClient, criseDetectorService, plantaoService, agendaService, emailService);
     }
 
     private Psicologo psicologoComEmail(String email, String nome) {

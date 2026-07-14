@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { ModalidadeSelector } from '@/components/marketplace/ModalidadeSelector'
+import { TipoAtendimentoSelector } from '@/components/marketplace/TipoAtendimentoSelector'
 import { buscarPsicologoPorId } from '@/services/marketplace'
 import { criarSessao } from '@/services/agendamento'
 import { formatarMoeda } from '@/lib/formatarMoeda'
@@ -34,6 +35,7 @@ export function PsicologoPublicProfilePage() {
   const queryClient = useQueryClient()
   const [slotSelecionado, setSlotSelecionado] = useState(null)
   const [modalidade, setModalidade] = useState('AVULSA')
+  const [tipoAtendimento, setTipoAtendimento] = useState('INDIVIDUAL')
 
   const { data, isLoading } = useQuery({
     queryKey: ['psicologo-perfil', id],
@@ -41,7 +43,7 @@ export function PsicologoPublicProfilePage() {
   })
 
   const agendarMutation = useMutation({
-    mutationFn: () => criarSessao({ slotId: slotSelecionado.id, modalidade }),
+    mutationFn: () => criarSessao({ slotId: slotSelecionado.id, modalidade, tipoAtendimento }),
     onSuccess: () => {
       toast.success('Sessão agendada com sucesso')
       queryClient.invalidateQueries({ queryKey: ['psicologo-perfil', id] })
@@ -65,6 +67,15 @@ export function PsicologoPublicProfilePage() {
         <CardHeader>
           <CardTitle>{data.nome}</CardTitle>
           {data.especializacao && <CardDescription>{data.especializacao}</CardDescription>}
+          {data.areasAtuacao?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {data.areasAtuacao.map((area) => (
+                <Badge key={area} variant="secondary">
+                  {area}
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm">
           {data.politicaCancelamento && (
@@ -109,9 +120,14 @@ export function PsicologoPublicProfilePage() {
               {slotSelecionado && `${data.nome} · ${formatarSlot(slotSelecionado.inicio)}`}
             </DialogDescription>
           </DialogHeader>
+          <TipoAtendimentoSelector value={tipoAtendimento} onChange={setTipoAtendimento} />
           <ModalidadeSelector
-            valorAvulsa={data.valorAvulsa}
-            valorPacotePorSessao={data.valorPacotePorSessao}
+            valorAvulsa={
+              tipoAtendimento === 'CASAL' ? data.valorAvulsa * 2 : data.valorAvulsa
+            }
+            valorPacotePorSessao={
+              tipoAtendimento === 'CASAL' ? data.valorPacotePorSessao * 2 : data.valorPacotePorSessao
+            }
             value={modalidade}
             onChange={setModalidade}
           />

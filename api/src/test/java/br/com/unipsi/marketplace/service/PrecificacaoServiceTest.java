@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.com.unipsi.agenda.domain.Modalidade;
+import br.com.unipsi.agenda.domain.TipoAtendimento;
 import br.com.unipsi.usuario.domain.FaixaRenda;
 import br.com.unipsi.usuario.domain.PacienteNaoElegivelException;
 import java.math.BigDecimal;
@@ -50,6 +51,33 @@ class PrecificacaoServiceTest {
     void calcularValorSessao_faixaNula_deveLancarPacienteNaoElegivelException() {
         assertThatThrownBy(() -> precificacaoService.calcularValorSessao(null, Modalidade.AVULSA))
                 .isInstanceOf(PacienteNaoElegivelException.class);
+    }
+
+    @Test
+    void calcularValorSessao_terapiaDeCasal_deveCobrarODobroDoIndividual() {
+        BigDecimal individual =
+                precificacaoService.calcularValorSessao(FaixaRenda.FAIXA_1, Modalidade.AVULSA, TipoAtendimento.INDIVIDUAL);
+        BigDecimal casal =
+                precificacaoService.calcularValorSessao(FaixaRenda.FAIXA_1, Modalidade.AVULSA, TipoAtendimento.CASAL);
+
+        assertThat(casal).isEqualByComparingTo(individual.multiply(BigDecimal.valueOf(2)));
+        assertThat(casal).isEqualByComparingTo("120.00");
+    }
+
+    @Test
+    void calcularValorPacoteTotal_deveMultiplicarValorDaSessaoPorQuatro() {
+        BigDecimal total =
+                precificacaoService.calcularValorPacoteTotal(FaixaRenda.FAIXA_1, TipoAtendimento.INDIVIDUAL);
+
+        assertThat(total).isEqualByComparingTo("228.00");
+    }
+
+    @Test
+    void calcularEconomiaPacote_deveSerDiferencaEntreQuatroAvulsasEOPacote() {
+        BigDecimal economia =
+                precificacaoService.calcularEconomiaPacote(FaixaRenda.FAIXA_1, TipoAtendimento.INDIVIDUAL);
+
+        assertThat(economia).isEqualByComparingTo("12.00");
     }
 
     @Test

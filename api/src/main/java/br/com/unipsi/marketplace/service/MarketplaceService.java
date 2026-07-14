@@ -29,11 +29,11 @@ public class MarketplaceService {
     private final PrecificacaoService precificacaoService;
 
     @Transactional(readOnly = true)
-    public List<PsicologoResumoResponse> buscar(UUID pacienteId, String especialidade) {
+    public List<PsicologoResumoResponse> buscar(UUID pacienteId, String areaAtuacao) {
         FaixaRenda faixaRenda = buscarPaciente(pacienteId).getFaixaRenda();
 
         return psicologoRepository.findByStatusAprovacao(StatusAprovacao.APROVADO).stream()
-                .filter(psicologo -> corresponde(psicologo, especialidade))
+                .filter(psicologo -> corresponde(psicologo, areaAtuacao))
                 .map(psicologo -> paraResumo(psicologo, faixaRenda))
                 .filter(resumo -> !resumo.proximasDisponibilidades().isEmpty())
                 .toList();
@@ -54,6 +54,7 @@ public class MarketplaceService {
                 psicologo.getId(),
                 psicologo.getUsuario().getNome(),
                 psicologo.getEspecializacao(),
+                psicologo.getAreasAtuacao(),
                 psicologo.getPoliticaCancelamento(),
                 psicologo.getLinkVideochamada(),
                 psicologo.getFotoUrl(),
@@ -72,6 +73,7 @@ public class MarketplaceService {
                 psicologo.getId(),
                 psicologo.getUsuario().getNome(),
                 psicologo.getEspecializacao(),
+                psicologo.getAreasAtuacao(),
                 psicologo.getFotoUrl(),
                 proximas,
                 precificacaoService.calcularValorSessao(faixaRenda, Modalidade.AVULSA),
@@ -83,11 +85,13 @@ public class MarketplaceService {
                 psicologoId, LocalDateTime.now());
     }
 
-    private boolean corresponde(Psicologo psicologo, String especialidade) {
-        return especialidade == null
-                || especialidade.isBlank()
-                || (psicologo.getEspecializacao() != null
-                        && psicologo.getEspecializacao().toLowerCase().contains(especialidade.toLowerCase()));
+    private boolean corresponde(Psicologo psicologo, String areaAtuacao) {
+        if (areaAtuacao == null || areaAtuacao.isBlank()) {
+            return true;
+        }
+        String busca = areaAtuacao.toLowerCase();
+        return psicologo.getAreasAtuacao().stream()
+                .anyMatch(area -> area != null && area.toLowerCase().contains(busca));
     }
 
     private Paciente buscarPaciente(UUID pacienteId) {

@@ -1,13 +1,12 @@
 package br.com.unipsi.usuario.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import br.com.unipsi.usuario.domain.FaixaRenda;
 import br.com.unipsi.usuario.domain.Paciente;
-import br.com.unipsi.usuario.domain.PacienteNaoElegivelException;
 import br.com.unipsi.usuario.domain.Usuario;
 import br.com.unipsi.usuario.dto.AtualizarPerfilPacienteRequest;
 import br.com.unipsi.usuario.dto.PerfilPacienteResponse;
@@ -20,12 +19,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 class PacienteServiceTest {
 
     @Mock
     private PacienteRepository pacienteRepository;
+
+    @Mock
+    private MinioService minioService;
 
     @InjectMocks
     private PacienteService pacienteService;
@@ -50,20 +53,41 @@ class PacienteServiceTest {
     }
 
     @Test
-    void atualizarPerfil_novaFaixaValida_deveAtualizarERetornar() {
+    void atualizarPerfil_deveAtualizarNomeEIdadeSemAlterarFaixaDeRenda() {
         when(pacienteRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(pacienteRepository.save(any(Paciente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        PerfilPacienteResponse resposta =
-                pacienteService.atualizarPerfil(pacienteId, new AtualizarPerfilPacienteRequest(FaixaRenda.FAIXA_3));
+        PerfilPacienteResponse resposta = pacienteService.atualizarPerfil(
+                pacienteId, new AtualizarPerfilPacienteRequest("Novo Nome", 30), null);
 
-        assertThat(resposta.faixaRenda()).isEqualTo(FaixaRenda.FAIXA_3);
+        assertThat(resposta.nome()).isEqualTo("Novo Nome");
+        assertThat(resposta.idade()).isEqualTo(30);
+        assertThat(resposta.faixaRenda()).isEqualTo(FaixaRenda.FAIXA_1);
+        assertThat(resposta.menorDeIdade()).isFalse();
+        verifyNoInteractions(minioService);
     }
 
     @Test
-    void atualizarPerfil_faixaForaDoEscopo_deveLancarPacienteNaoElegivelException() {
-        assertThatThrownBy(() -> pacienteService.atualizarPerfil(
-                        pacienteId, new AtualizarPerfilPacienteRequest(FaixaRenda.FORA_DO_ESCOPO)))
-                .isInstanceOf(PacienteNaoElegivelException.class);
+    void atualizarPerfil_comIdadeMenorDeIdade_deveMarcarMenorDeIdade() {
+        when(pacienteRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
+        when(pacienteRepository.save(any(Paciente.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        PerfilPacienteResponse resposta = pacienteService.atualizarPerfil(
+                pacienteId, new AtualizarPerfilPacienteRequest("Paciente Jovem", 16), null);
+
+        assertThat(resposta.menorDeIdade()).isTrue();
+    }
+
+    @Test
+    void atualizarPerfil_comFoto_deveEnviarParaMinioEGravarUrl() {
+        when(pacienteRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
+        when(pacienteRepository.save(any(Paciente.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        var foto = new MockMultipartFile("foto", "foto.png", "image/png", new byte[] {1, 2, 3});
+        when(minioService.enviarFoto(pacienteId, foto)).thenReturn("fotos/" + pacienteId + "/foto.png");
+
+        PerfilPacienteResponse resposta =
+                pacienteService.atualizarPerfil(pacienteId, new AtualizarPerfilPacienteRequest("Paciente Teste", 30), foto);
+
+        assertThat(resposta.fotoUrl()).isEqualTo("fotos/" + pacienteId + "/foto.png");
     }
 }

@@ -15,6 +15,11 @@ const LABEL_MODALIDADE = {
   PACOTE_MENSAL: 'Pacote mensal',
 }
 
+const LABEL_TIPO_ATENDIMENTO = {
+  INDIVIDUAL: 'Individual',
+  CASAL: 'Terapia de casal',
+}
+
 function formatarDataHora(dataHoraIso) {
   return new Date(dataHoraIso).toLocaleString('pt-BR', {
     weekday: 'short',
@@ -54,7 +59,18 @@ export function AgendamentosPage() {
               <CardContent className="flex flex-col gap-1 text-sm">
                 <span>Psicólogo: {sessao.nomePsicologo}</span>
                 <span>Modalidade: {LABEL_MODALIDADE[sessao.modalidade]}</span>
-                <span>Valor: {formatarMoeda(sessao.valorSessao)}</span>
+                <span>Tipo de atendimento: {LABEL_TIPO_ATENDIMENTO[sessao.tipoAtendimento]}</span>
+                {sessao.modalidade === 'PACOTE_MENSAL' ? (
+                  <div className="mt-1 flex flex-col gap-0.5 rounded-md border bg-muted px-3 py-2">
+                    <span>Sessão avulsa: {formatarMoeda(sessao.valorSessaoAvulsa)}</span>
+                    <span>Pacote mensal (4 sessões): {formatarMoeda(sessao.valorPacoteTotal)}</span>
+                    <span className="font-medium text-primary">
+                      Você economiza {formatarMoeda(sessao.economiaPacote)} escolhendo o pacote
+                    </span>
+                  </div>
+                ) : (
+                  <span>Valor: {formatarMoeda(sessao.valorSessao)}</span>
+                )}
                 {sessao.linkVideochamada && sessao.status === 'AGENDADA' && (
                   <a
                     href={sessao.linkVideochamada}
